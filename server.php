@@ -237,6 +237,8 @@ function try_parse_request_fast(string &$buffer, int &$offset): ?array {
 
   // method + uri
   $sp1 = strpos($buffer, ' ');
+  $headerStr = substr($buffer, 0, $headerEnd);
+  $offset = $headerEnd;
   if ($sp1 === false) return null;
 
   $sp2 = strpos($buffer, ' ', $sp1 + 1);
@@ -263,6 +265,14 @@ function try_parse_request_fast(string &$buffer, int &$offset): ?array {
 
   if (str_contains($uri, "\0") || str_contains($uri, "..")) {
     return ['__invalid' => 400];
+  }
+
+  $path = substr($headerStr, $sp1 + 1, $sp2 - $sp1 - 1);
+  $query = [];
+
+  if (($qpos = strpos($path, '?')) !== false) {
+    $path = substr($path, 0, $qpos);
+    parse_kv(substr($path, $qpos + 1), $query);
   }
 
   $clPos = stripos($buffer, "\r\nContent-Length:");
@@ -295,11 +305,61 @@ function try_parse_request_fast(string &$buffer, int &$offset): ?array {
     $offset = 0;
   }
 
+  // headers
+  $headers = [];
+  $lines = explode("\r\n", $headerStr);
+
+  foreach ($lines as $line) {
+    $colon = strpos($line, ':');
+    if ($colon === false) continue;
+
+    $key = strtolower(trim(substr($line, 0, $colon)));
+    $val = trim(substr($line, $colon + 1));
+    $headers[$key] = $val;
+  }
+
   return [
     'm' => $method,
     'u' => $uri,
-    'b' => $body
+    'q' => $query,
+    'h' => $headers,
+    'b' => $body,
   ];
+}
+
+function parse_kv(string $str, array &$out): void {
+  $len = strlen($str);
+  $key = $val = '';
+  $readingKey = true;
+
+  for ($i = 0; $i < $len; $i++) {
+    $ch = $str[$i];
+
+    if ($readingKey) {
+      if ($ch === '=') {
+        $readingKey = false;
+      } elseif ($ch === '&') {
+        $out[$key] = '';
+        $key = '';
+      } else {
+        $key .= $ch;
+      }
+
+    } else {
+      if ($ch === '&') {
+        $out[$key] = $val;
+        $key = '';
+        $val = '';
+        $readingKey = true;
+      } else {
+        $val .= $ch;
+      }
+    }
+  }
+
+  if ($key !== '') {
+    $out[$key] = $val;
+  }
 }
 
 function handle_fast($sock, array $req): void {
