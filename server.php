@@ -73,7 +73,7 @@ function server_run(string $host, int $port): void {
   $server = stream_socket_server("tcp://{$host}:{$port}", $errno, $errstr, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, $context);
 
   if (! $server) {
-    die("Server error: {$errstr}\n");
+    die("Server error: {$errstr}".PHP_EOL);
   }
 
   stream_set_blocking($server, false);
@@ -101,17 +101,17 @@ function loop_ev($server): void {
     if (!$client) return;
 
     stream_set_blocking($client, false);
-    $id = (int)$client;
+    $id = (int) $client;
     $__clients[$id] = $client;
     $__buffers[$id] = '';
     $__offsets[$id] = 0;
 
     $loop->io($client, Ev::READ, function($cw) use ($__clients, $__buffers, $__offsets, $max_header_size) {
       $sock = $cw->fd;
-      $id = (int)$sock;
+      $id = (int) $sock;
       $data = fread($sock, 8192);
 
-      if (strlen($__buffers[$id]) > $max_header_size) {
+      if (\strlen($__buffers[$id]) > $max_header_size) {
         drop_connection($sock, 413);
         return;
       }
@@ -176,7 +176,7 @@ function loop_select($server): void {
         $id = (int)$sock;
         $data = fread($sock, 8192);
 
-        if (strlen($__buffers[$id]) > $max_header_size) {
+        if (\strlen($__buffers[$id]) > $max_header_size) {
           drop_connection($sock, 413);
           continue;
         }
@@ -216,10 +216,11 @@ function try_parse_request_fast(string &$buffer, int &$offset): ?array {
     $max_uri_length = $server_cnf['max_uri_length'] ?? 2048;
   }
 
-  $len = strlen($buffer);
+  $len = \strlen($buffer);
   $headerEnd = -1;
+  $query =  $headers = [];
 
-  for ($i = max(3, $offset); $i < $len; $i++) {
+  for ($i = \max(3, $offset); $i < $len; $i++) {
     if ($buffer[$i-3] === "\r" && $buffer[$i-2] === "\n" && $buffer[$i-1] === "\r" && $buffer[$i]   === "\n") {
       $headerEnd = $i + 1;
       break;
@@ -235,15 +236,15 @@ function try_parse_request_fast(string &$buffer, int &$offset): ?array {
     return ['__invalid' => 413];
   }
 
-  // method + uri
-  $sp1 = strpos($buffer, ' ');
-  $headerStr = substr($buffer, 0, $headerEnd);
+  // parsing
+  $sp1 = \strpos($buffer, ' ');
+  $headerStr = \substr($buffer, 0, $headerEnd);
   $offset = $headerEnd;
   if ($sp1 === false) return null;
 
-  $sp2 = strpos($buffer, ' ', $sp1 + 1);
-  $httpEnd = strpos($buffer, "\r\n");
-  $httpLine = substr($buffer, $sp2 + 1, $httpEnd - $sp2 - 1);
+  $sp2 = \strpos($buffer, ' ', $sp1 + 1);
+  $httpEnd = \strpos($buffer, "\r\n");
+  $httpLine = \substr($buffer, $sp2 + 1, $httpEnd - $sp2 - 1);
 
   if ($httpLine !== 'HTTP/1.1' && $httpLine !== 'HTTP/1.0') {
     return ['__invalid' => 400];
@@ -251,36 +252,35 @@ function try_parse_request_fast(string &$buffer, int &$offset): ?array {
 
   if ($sp2 === false) return null;
 
-  $method = substr($buffer, 0, $sp1);
-  $uri = substr($buffer, $sp1 + 1, $sp2 - $sp1 - 1);
+  $method = \substr($buffer, 0, $sp1);
+  $uri = \substr($buffer, $sp1 + 1, $sp2 - $sp1 - 1);
   $contentLength = 0;
 
   if ($method !== 'GET' && $method !== 'POST' && $method !== 'HEAD') {
     return ['__invalid' => 405];
   }
 
-  if (strlen($uri) > $max_uri_length) {
+  if (\strlen($uri) > $max_uri_length) {
     return ['__invalid' => 414];
   }
 
-  if (str_contains($uri, "\0") || str_contains($uri, "..")) {
+  if (\str_contains($uri, "\0") || \str_contains($uri, "..")) {
     return ['__invalid' => 400];
   }
 
-  $path = substr($headerStr, $sp1 + 1, $sp2 - $sp1 - 1);
-  $query = [];
-
-  if (($qpos = strpos($path, '?')) !== false) {
-    $path = substr($path, 0, $qpos);
-    parse_kv(substr($path, $qpos + 1), $query);
+  $path = \substr($headerStr, $sp1 + 1, $sp2 - $sp1 - 1);
+  
+  if (($qpos = \strpos($path, '?')) !== false) {
+    $p = \substr($path, 0, $qpos);
+    parse_kv(\substr($p, $qpos + 1), $query);
   }
 
-  $clPos = stripos($buffer, "\r\nContent-Length:");
-  if ($clPos !== false && $clPos < $headerEnd) {
+  $clPos = \stripos($buffer, "\r\nContent-Length:");
+  if (false !== $clPos && $clPos < $headerEnd) {
     $numStart = $clPos + 17;
-    $numEnd = strpos($buffer, "\r\n", $numStart);
+    $numEnd = \strpos($buffer, "\r\n", $numStart);
     if ($numEnd !== false) {
-      $contentLength = (int)substr($buffer, $numStart, $numEnd - $numStart);
+      $contentLength = (int) \substr($buffer, $numStart, $numEnd - $numStart);
     }
   }
 
@@ -294,27 +294,22 @@ function try_parse_request_fast(string &$buffer, int &$offset): ?array {
     return ['__invalid' => 413];
   }
 
-  $body = $contentLength > 0
-    ? substr($buffer, $headerEnd, $contentLength)
-    : '';
-
+  $body = $contentLength > 0 ? \substr($buffer, $headerEnd, $contentLength) : '';
   $offset = $total;
 
   if ($offset > 8192) {
-    $buffer = substr($buffer, $offset);
+    $buffer = \substr($buffer, $offset);
     $offset = 0;
   }
 
   // headers
-  $headers = [];
   $lines = explode("\r\n", $headerStr);
-
   foreach ($lines as $line) {
-    $colon = strpos($line, ':');
+    $colon = \strpos($line, ':');
     if ($colon === false) continue;
 
-    $key = strtolower(trim(substr($line, 0, $colon)));
-    $val = trim(substr($line, $colon + 1));
+    $key = \strtolower(\trim(\substr($line, 0, $colon)));
+    $val = \trim(\substr($line, $colon + 1));
     $headers[$key] = $val;
   }
 
@@ -328,7 +323,7 @@ function try_parse_request_fast(string &$buffer, int &$offset): ?array {
 }
 
 function parse_kv(string $str, array &$out): void {
-  $len = strlen($str);
+  $len = \strlen($str);
   $key = $val = '';
   $readingKey = true;
 
@@ -363,16 +358,16 @@ function parse_kv(string $str, array &$out): void {
 }
 
 function handle_fast($sock, array $req): void {
+  // route 
   if ($req['u'] === '/') {
     fwrite($sock, resp_static);
     return;
   }
 
-  // fallback 
   $body = "Path: ".$req['u'];
-  $len = strlen($body);
+  $len = \strlen($body);
 
-  $out ="HTTP/1.1 200 OK\r\n"."Content-Length: {$len}\r\n"."Connection: keep-alive\r\n\r\n".$body;
+  static $out ="HTTP/1.1 200 OK\r\n"."Content-Length: {$len}\r\n"."Connection: keep-alive\r\n\r\n".$body;
   fwrite($sock, $out);
 }
 
