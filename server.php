@@ -89,55 +89,57 @@ function loop_ev($server): void {
     global $server_cnf;
     $max_header_size = $server_cnf['max_header_size'] ?? 8192;
   }
-
+  
   $loop = EvLoop::defaultLoop();
-  $loop->io($server, Ev::READ, function($w) use ($loop, $max_header_size) {
-    global $__clients, $__buffers, $__offsets;
-    $client = stream_socket_accept($w->fd, 0);
-    if (! $client) return;
+  static $watchers = [];
 
-    stream_set_blocking($client, false);
-    $id = (int) $client;
-    $__clients[$id] = $client;
-    $__buffers[$id] = '';
-    $__offsets[$id] = 0;
+  $watchers['server'] = $loop->io($server, Ev::READ, function ($w) use ($server, $loop, &$watchers, $max_header_size) {
+    while ($client = @stream_socket_accept($server, 0)) {
+      stream_set_blocking($client, false);
+      $state = [
+        'sock'   => $client,
+        'buffer' => '',
+        'offset' => 0,
+      ];
 
-    $loop->io($client, Ev::READ, function($cw) use ($__clients, $__buffers, $__offsets, $max_header_size) {
-      $sock = $cw->fd;
-      $id = (int) $sock;
-      $data = fread($sock, 8192);
+      $watcher = $loop->io($client, Ev::READ, function ($cw) use (&$watchers, $max_header_size) {
+        $state = &$cw->data;
+        $sock  = $state['sock'];
+        $data = @fread($sock, 8192);
 
-      if (\strlen($__buffers[$id]) > $max_header_size) {
-        drop_connection($sock, 413);
-        return;
-      }
-
-      if ('' === $data || false === $data) {
-        fclose($sock);
-        unset($__clients[$id], $__buffers[$id], $__offsets[$id]);
-        return;
-      }
-
-      $__buffers[$id] .= $data;
-
-      while (true) {
-        $req = parse_request($__buffers[$id], $__offsets[$id]);
-        if (\is_null($req)) break;
-
-        if (isset($req['__invalid'])) {
-          drop_connection($sock, $req['__invalid']);
-          unset($__clients[$id], $__buffers[$id], $__offsets[$id]);
-          break;
+        if ($data === '' || $data === false) {
+          $cw->stop();
+          fclose($sock);
+          return;
         }
 
-        if (null !== $req && ! isset($req['__invalid'])) {
-          $peer = stream_socket_get_name($sock, true);
-          $req['r_ip'] = explode(':', $peer)[0];
+        $state['buffer'] .= $data;
+
+        if (strlen($state['buffer']) > $max_header_size) {
+          drop_connection($sock, 413);
+          $cw->stop();
+          return;
         }
 
-        handle_fast($sock, $req);
-      }
-    });
+        while (true) {
+          $req = parse_request($state['buffer'], $state['offset']);
+          if ($req === null) {
+            break;
+          }
+
+          if (isset($req['__invalid'])) {
+            drop_connection($sock, $req['__invalid']);
+            $cw->stop();
+            return;
+          }
+
+          handle_fast($sock, $req);
+        }
+      });
+
+      $watcher->data = $state;
+      $watchers[(int)$client] = $watcher;
+    }
   });
 
   $loop->run();
@@ -202,7 +204,12 @@ function loop_select($server): void {
 
           if (null !== $req && ! isset($req['__invalid'])) {
             $peer = stream_socket_get_name($sock, true);
-            $req['r_ip'] = explode(':', $peer)[0];
+            if (false !== $peer) {
+              $pos = \strrpos($peer, ':');
+              $req['r_ip'] = false !== $pos ? \substr($peer, 0, $pos) : $peer;
+            } else {
+              $req['r_ip'] = null;
+            }
           }
 
           handle_fast($sock, $req);
@@ -378,6 +385,7 @@ function parse_kv(string $str, array &$out): void {
 }
 
 function handle_fast($sock, array $req): void {
+  static $header = "HTTP/1.1 200 OK\r\n"."Content-Length: ";
   if ('/' === $req['r_path']) {
     fwrite($sock, resp_static);
     return;
@@ -385,8 +393,7 @@ function handle_fast($sock, array $req): void {
   } else {
     $body = "Path: ".$req['r_path'];
     $len  = \strlen($body);
-
-    $out = "HTTP/1.1 200 OK\r\n"."Content-Length: {$len}\r\n"."Connection: keep-alive\r\n\r\n".$body;
+    $out = $header."{$len}\r\n"."Connection: keep-alive\r\n\r\n".$body;
     fwrite($sock, $out);
   }
 }
