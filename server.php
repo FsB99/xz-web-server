@@ -34,7 +34,7 @@ function server_start(string $host, int $port, int $workers): void {
   echo PHP_EOL.'- pcntl: '.($pcntl ? 'ok' : '-');
   echo PHP_EOL.'- ev: '.($ev ? 'ok' : '-');
   echo PHP_EOL.'- worker: '.$workers;
-  echo PHP_EOL.'Starting Web Server on: http://'.(in_array($host, ['0.0.0.0', '127.0.0.1']) ? 'localhost' : $host).':'.$port.PHP_EOL.PHP_EOL;
+  echo PHP_EOL.'Starting Web Server on: http://'.(\in_array($host, ['0.0.0.0', '127.0.0.1']) ? 'localhost' : $host).':'.$port.PHP_EOL.PHP_EOL;
 
   if ($pcntl && 'unix' === $os && $workers > 1) {
     for ($i = 0; $i < $workers; $i++) {
@@ -94,7 +94,7 @@ function loop_ev($server): void {
   $loop->io($server, Ev::READ, function($w) use ($loop, $max_header_size) {
     global $__clients, $__buffers, $__offsets;
     $client = stream_socket_accept($w->fd, 0);
-    if (!$client) return;
+    if (! $client) return;
 
     stream_set_blocking($client, false);
     $id = (int) $client;
@@ -112,7 +112,7 @@ function loop_ev($server): void {
         return;
       }
 
-      if ($data === '' || $data === false) {
+      if ('' === $data || false === $data) {
         fclose($sock);
         unset($__clients[$id], $__buffers[$id], $__offsets[$id]);
         return;
@@ -122,7 +122,7 @@ function loop_ev($server): void {
 
       while (true) {
         $req = parse_request($__buffers[$id], $__offsets[$id]);
-        if ($req === null) break;
+        if (\is_null($req)) break;
 
         if (isset($req['__invalid'])) {
           drop_connection($sock, $req['__invalid']);
@@ -130,7 +130,7 @@ function loop_ev($server): void {
           break;
         }
 
-        if ($req !== null && !isset($req['__invalid'])) {
+        if (null !== $req && ! isset($req['__invalid'])) {
           $peer = stream_socket_get_name($sock, true);
           $req['r_ip'] = explode(':', $peer)[0];
         }
@@ -157,7 +157,7 @@ function loop_select($server): void {
     foreach ($__clients as $c) $read[] = $c;
     $write = $except = [];
 
-    if (stream_select($read, $write, $except, null) === false) {
+    if (false === stream_select($read, $write, $except, null)) {
       continue;
     }
 
@@ -182,7 +182,7 @@ function loop_select($server): void {
           continue;
         }
 
-        if ($data === '' || $data === false) {
+        if ('' === $data || false === $data) {
           fclose($sock);
           unset($__clients[$id], $__buffers[$id], $__offsets[$id]);
           continue;
@@ -192,7 +192,7 @@ function loop_select($server): void {
 
         while (true) {
           $req = parse_request($__buffers[$id], $__offsets[$id]);
-          if ($req === null) break;
+          if (\is_null($req)) break;
 
           if (isset($req['__invalid'])) {
             drop_connection($sock, $req['__invalid']);
@@ -200,7 +200,7 @@ function loop_select($server): void {
             break;
           }
 
-          if ($req !== null && !isset($req['__invalid'])) {
+          if (null !== $req && ! isset($req['__invalid'])) {
             $peer = stream_socket_get_name($sock, true);
             $req['r_ip'] = explode(':', $peer)[0];
           }
@@ -215,7 +215,7 @@ function loop_select($server): void {
 function parse_request(string &$buffer, int &$offset): ?array {
   static $max_header_size = null, $max_body_size = null, $max_uri_length = null;
 
-  if ($max_header_size === null) {
+  if (\is_null($max_header_size)) {
     global $server_cnf;
     $max_header_size = $server_cnf['max_header_size'];
     $max_body_size   = $server_cnf['max_body_size'];
@@ -226,101 +226,99 @@ function parse_request(string &$buffer, int &$offset): ?array {
   $headers = $cookies = $get = $post = $files = [];
 
   // find header end
-  $headerEnd = -1;
+  $header_end = -1;
   for ($i = max(3, $offset); $i < $len; $i++) {
-    if ($buffer[$i-3] === "\r" && $buffer[$i-2] === "\n" && $buffer[$i-1] === "\r" && $buffer[$i] === "\n") {
-      $headerEnd = $i + 1;
+    if ("\r" === $buffer[$i-3] && "\n" === $buffer[$i-2] && "\r" === $buffer[$i-1] && "\n" === $buffer[$i]) {
+      $header_end = $i + 1;
       break;
     }
   }
 
-  if ($headerEnd === -1) {
+  if (-1 === $header_end) {
     $offset = $len;
     return null;
   }
 
-  if ($headerEnd > $max_header_size) {
+  if ($header_end > $max_header_size) {
     return ['__invalid' => 413];
   }
 
   // request line
-  $lineEnd = \strpos($buffer, "\r\n", $offset);
-  if ($lineEnd === false) return ['__invalid' => 400];
+  $line_end = \strpos($buffer, "\r\n", $offset);
+  if (false === $line_end) return ['__invalid' => 400];
 
   $sp1 = \strpos($buffer, ' ', $offset);
-  if ($sp1 === false) return ['__invalid' => 400];
+  if (false === $sp1) return ['__invalid' => 400];
 
   $sp2 = \strpos($buffer, ' ', $sp1 + 1);
-  if ($sp2 === false) return ['__invalid' => 400];
+  if (false === $sp2) return ['__invalid' => 400];
 
   $method = \strtolower(\substr($buffer, $offset, $sp1 - $offset));
-
-  if ($method !== 'get' && $method !== 'post' && $method !== 'head') {
+  if (! \in_array($method, ['get', 'post', 'head'])) {
     return ['__invalid' => 405];
   }
 
   $uri = \substr($buffer, $sp1 + 1, $sp2 - $sp1 - 1);
-
   if (\strlen($uri) > $max_uri_length || \str_contains($uri, "\0")) {
     return ['__invalid' => 414];
   }
 
   // http version check
-  $http = \substr($buffer, $sp2 + 1, $lineEnd - $sp2 - 1);
-  if ($http !== 'HTTP/1.1' && $http !== 'HTTP/1.0') {
+  $http = \substr($buffer, $sp2 + 1, $line_end - $sp2 - 1);
+  if (! \in_array($http, ['HTTP/1.1', 'HTTP/1.0'])) {
     return ['__invalid' => 400];
   }
 
   // split path + query
   $qpos = \strpos($uri, '?');
-  if ($qpos === false) {
+  if (false === $qpos) {
     $path = $uri;
-    $queryStr = '';
+    $query_str = '';
   } else {
     $path = \substr($uri, 0, $qpos);
-    $queryStr = \substr($uri, $qpos + 1);
+    $query_str = \substr($uri, $qpos + 1);
   }
 
   // headers
-  $contentLength = 0;
-  $hStart = $lineEnd + 2;
+  $content_length = 0;
+  $h_start = $line_end + 2;
 
-  while ($hStart < $headerEnd - 2) {
-    $hEnd = \strpos($buffer, "\r\n", $hStart);
-    if ($hEnd === false) break;
+  while ($h_start < $header_end - 2) {
+    $h_end = \strpos($buffer, "\r\n", $h_start);
+    if (false === $h_end) break;
 
-    $colon = \strpos($buffer, ':', $hStart);
-    if ($colon !== false && $colon < $hEnd) {
-      $key = \strtolower(\trim(\substr($buffer, $hStart, $colon - $hStart)));
-      $val = \trim(\substr($buffer, $colon + 1, $hEnd - $colon - 1));
+    $colon = \strpos($buffer, ':', $h_start);
+    if (false !== $colon && $colon < $h_end) {
+      $key = \strtolower(\trim(\substr($buffer, $h_start, $colon - $h_start)));
+      $val = \trim(\substr($buffer, $colon + 1, $h_end - $colon - 1));
       $headers[$key] = $val;
 
-      if ($key === 'content-length') {
-        $contentLength = (int) $val;
-        if ($contentLength < 0 || $contentLength > $max_body_size) {
+      if (\in_array($key, ['content-length', 'Content-Length'])) {
+        $content_length = (int) $val;
+        if ($content_length < 0 || $content_length > $max_body_size) {
           return ['__invalid' => 413];
         }
       }
 
-      if ($key === 'cookie') {
+      if ('cookie' === $key) {
         parse_kv(\str_replace('; ', '&', $val), $cookies);
       }
     }
 
-    $hStart = $hEnd + 2;
+    $h_start = $h_end + 2;
   }
 
-  $total = $headerEnd + $contentLength;
+  $total = $header_end + $content_length;
   if ($len < $total) return null;
-  $body = $contentLength > 0 ? substr($buffer, $headerEnd, $contentLength) : '';
+  $body = $content_length > 0 ? substr($buffer, $header_end, $content_length) : '';
 
   // get
-  if ($queryStr !== '') {
-    parse_kv($queryStr, $get);
+  if ($query_str !== '') {
+    parse_kv($query_str, $get);
   }
 
   // post (urlencoded only)
-  if ($method === 'POST' && $contentLength > 0) {
+  if ('post' === $method && $content_length > 0) {
     if (isset($headers['content-type']) && str_contains($headers['content-type'], 'application/x-www-form-urlencoded')) {
       parse_kv($body, $post);
     }
@@ -347,15 +345,15 @@ function parse_request(string &$buffer, int &$offset): ?array {
 function parse_kv(string $str, array &$out): void {
   $len = \strlen($str);
   $key = $val = '';
-  $readingKey = true;
+  $reading_key = true;
 
   for ($i = 0; $i < $len; $i++) {
     $ch = $str[$i];
 
-    if ($readingKey) {
-      if ($ch === '=') {
-        $readingKey = false;
-      } elseif ($ch === '&') {
+    if ($reading_key) {
+      if ('=' === $ch) {
+        $reading_key = false;
+      } elseif ('&' === $ch) {
         $out[$key] = '';
         $key = '';
       } else {
@@ -363,24 +361,24 @@ function parse_kv(string $str, array &$out): void {
       }
 
     } else {
-      if ($ch === '&') {
+      if ('&' === $ch) {
         $out[$key] = $val;
         $key = '';
         $val = '';
-        $readingKey = true;
+        $reading_key = true;
       } else {
         $val .= $ch;
       }
     }
   }
 
-  if ($key !== '') {
+  if ('' !== $key) {
     $out[$key] = $val;
   }
 }
 
 function handle_fast($sock, array $req): void {
-  if ($req['r_path'] === '/') {
+  if ('/' === $req['r_path']) {
     fwrite($sock, resp_static);
     return;
   
@@ -430,6 +428,6 @@ function cpu_count(): int{
   return $rt;
 }
 
-if (PHP_SAPI === 'cli') {
+if (\in_array(PHP_SAPI, ['cli', 'micro'])) {
   server_start($server_cnf['host'], $server_cnf['port'], $server_cnf['workers']);
 }
