@@ -355,6 +355,10 @@ function parse_request(string &$buffer, int &$offset): ?array {
     return ['__invalid' => 400];
   }
 
+  if (isset($headers['transfer-encoding'])) {
+    return ['__invalid' => 501];
+  }
+
   $total = $header_end + $content_length;
   if ($len < $total) return null;
 
@@ -374,6 +378,7 @@ function parse_request(string &$buffer, int &$offset): ?array {
   $offset = 0;
 
   return [
+    'r_ver' => $http,
     'r_head' => $headers,
     'r_ip' => null,
     'r_cookie' => $cookies,
@@ -437,33 +442,46 @@ function handle_fast($sock, array $req, array $state): void {
     $body = "Path: " . $req['r_uri'];
   }
 
-  $len = strlen($body);
+  $len = \strlen($body);
   $headers = $base . $len . "\r\n";
+  $close = false;
 
-  if (isset($req['r_close']) && $req['r_close']) {
+  if ($req['r_ver'] === 'HTTP/1.0') {
+    $close = !isset($req['r_head']['connection']) || \strtolower($req['r_head']['connection']) !== 'keep-alive';
+  } else {
+    $close = $req['r_close'];
+  }
+
+  if ($close) {
     $headers .= "Connection: close\r\n";
   } else {
     $headers .= "Connection: keep-alive\r\n";
   }
 
+  $headers .= "Date: " . gmdate('D, d M Y H:i:s') . " GMT\r\n";
+  $headers .= "Server: XLNZ\r\n";
   $headers .= "\r\n";
-  $response = $headers . $body;
+  $response = $headers;
+
+  if ($req['r_mtd'] !== 'head') {
+    $response .= $body;
+  }
+
   $written = 0;
-  $total = strlen($response);
+  $total = \strlen($response);
 
   while ($written < $total) {
-    $n = @fwrite($sock, substr($response, $written));
-    if ($n === false || $n === 0) {
+    $n = @fwrite($sock, \substr($response, $written));
+    if (false === $n || 0 === $n) {
       break;
     }
     $written += $n;
   }
 
-  if (isset($req['r_close']) && $req['r_close']) {
-    if ($state['timer']) {
+  if ($close) {
+    if (!empty($state['timer'])) {
       $state['timer']->stop();
     }
-
     fclose($sock);
   }
 }
