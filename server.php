@@ -15,7 +15,7 @@ $GLOBALS['server_cnf'] = [
   'ext_ev' => extension_loaded('ev'),
   'ext_pcntl' => function_exists('pcntl_fork'),
 ];
-CONST resp_static = "HTTP/1.1 200 OK\r\n"."Content-Length: 5\r\n"."Connection: keep-alive\r\n\r\n"."hello";
+const resp_static = "HTTP/1.1 200 OK\r\n"."Content-Length: 5\r\n"."Connection: keep-alive\r\n\r\n"."hello";
 
 $__clients = $__buffers = $__offsets = [];
 
@@ -83,39 +83,53 @@ function server_run(string $host, int $port): void {
 }
 
 function loop_ev($server): void {
-  static $max_header_size = null;
+  static $max_header_size = null, $server_idle = null;
 
   if (\is_null($max_header_size)) {
     global $server_cnf;
     $max_header_size = $server_cnf['max_header_size'] ?? 8192;
+    $server_idle = $server_cnf['idle_second'] ?? 10;
   }
   
   $loop = EvLoop::defaultLoop();
   static $watchers = [];
 
-  $watchers['server'] = $loop->io($server, Ev::READ, function ($w) use ($server, $loop, &$watchers, $max_header_size) {
+  $watchers['server'] = $loop->io($server, Ev::READ, function ($w) use ($server, $loop, &$watchers, $max_header_size, &$server_idle) {
     while ($client = @stream_socket_accept($server, 0)) {
       stream_set_blocking($client, false);
       $state = [
         'sock'   => $client,
         'buffer' => '',
         'offset' => 0,
+        'timer'  => null,
       ];
 
-      $watcher = $loop->io($client, Ev::READ, function ($cw) use (&$watchers, $max_header_size) {
+      $timerWatcher = null;
+
+      $watcher = $loop->io($client, Ev::READ, function ($cw) use ($max_header_size, $watchers) {
         $state = &$cw->data;
         $sock  = $state['sock'];
+
+        if ($state['timer']) {
+          $state['timer']->again();
+        }
+
         $data = @fread($sock, 8192);
 
-        if ($data === '' || $data === false) {
+        if ('' === $data || false === $data) {
+          if ($state['timer']) {
+            $state['timer']->stop();
+          }
+
           $cw->stop();
           fclose($sock);
+          unset($watchers[(int)$sock]);
           return;
         }
 
         $state['buffer'] .= $data;
 
-        if (strlen($state['buffer']) > $max_header_size) {
+        if (\strlen($state['buffer']) > $max_header_size) {
           drop_connection($sock, 413);
           $cw->stop();
           return;
@@ -129,14 +143,29 @@ function loop_ev($server): void {
 
           if (isset($req['__invalid'])) {
             drop_connection($sock, $req['__invalid']);
+            if ($state['timer']) {
+              $state['timer']->stop();
+            }
             $cw->stop();
+            unset($watchers[(int)$sock]);
             return;
           }
 
-          handle_fast($sock, $req);
+          handle_fast($sock, $req, $state);
         }
       });
 
+      $timerWatcher = $loop->timer(
+        $server_idle,
+        0,
+        function ($tw) use (&$watcher, $client, $watchers) {
+          $watcher->stop();
+          fclose($client);
+          unset($watchers[(int)$client]);
+        }
+      );
+
+      $state['timer'] = $timerWatcher;
       $watcher->data = $state;
       $watchers[(int)$client] = $watcher;
     }
@@ -149,7 +178,7 @@ function loop_select($server): void {
   global $__clients, $__buffers, $__offsets;
   static $max_header_size = null;
 
-  if (\is_null($max_header_size)) {
+  if (is_null($max_header_size)) {
     global $server_cnf;
     $max_header_size = $server_cnf['max_header_size'] ?? 8192;
   }
@@ -174,45 +203,44 @@ function loop_select($server): void {
           $__buffers[$id] = '';
           $__offsets[$id] = 0;
         }
+        continue;
+      }
 
-      } else {
-        $id = (int)$sock;
-        $data = fread($sock, 8192);
+      $id   = (int)$sock;
+      $data = fread($sock, 8192);
 
-        if (\strlen($__buffers[$id]) > $max_header_size) {
-          drop_connection($sock, 413);
-          continue;
-        }
+      if ('' === $data || false === $data) {
+        fclose($sock);
+        unset($__clients[$id], $__buffers[$id], $__offsets[$id]);
+        continue;
+      }
 
-        if ('' === $data || false === $data) {
+      $__buffers[$id] .= $data;
+
+      if (strlen($__buffers[$id]) > $max_header_size) {
+        drop_connection($sock, 413);
+        fclose($sock);
+        unset($__clients[$id], $__buffers[$id], $__offsets[$id]);
+        continue;
+      }
+
+      while (true) {
+        $req = parse_request($__buffers[$id], $__offsets[$id]);
+        if (\is_null($req)) break;
+
+        if (isset($req['__invalid'])) {
+          drop_connection($sock, $req['__invalid']);
           fclose($sock);
           unset($__clients[$id], $__buffers[$id], $__offsets[$id]);
-          continue;
+          break;
         }
 
-        $__buffers[$id] .= $data;
+        handle_fast($sock, $req, ['timer' => null]);
 
-        while (true) {
-          $req = parse_request($__buffers[$id], $__offsets[$id]);
-          if (\is_null($req)) break;
-
-          if (isset($req['__invalid'])) {
-            drop_connection($sock, $req['__invalid']);
-            unset($__clients[$id], $__buffers[$id], $__offsets[$id]);
-            break;
-          }
-
-          if (null !== $req && ! isset($req['__invalid'])) {
-            $peer = stream_socket_get_name($sock, true);
-            if (false !== $peer) {
-              $pos = \strrpos($peer, ':');
-              $req['r_ip'] = false !== $pos ? \substr($peer, 0, $pos) : $peer;
-            } else {
-              $req['r_ip'] = null;
-            }
-          }
-
-          handle_fast($sock, $req);
+        if (isset($req['r_close']) && $req['r_close']) {
+          fclose($sock);
+          unset($__clients[$id], $__buffers[$id], $__offsets[$id]);
+          break;
         }
       }
     }
@@ -232,19 +260,16 @@ function parse_request(string &$buffer, int &$offset): ?array {
   $len = \strlen($buffer);
   $headers = $cookies = $get = $post = $files = [];
 
-  // find header end
-  $header_end = -1;
-  for ($i = max(3, $offset); $i < $len; $i++) {
-    if ("\r" === $buffer[$i-3] && "\n" === $buffer[$i-2] && "\r" === $buffer[$i-1] && "\n" === $buffer[$i]) {
-      $header_end = $i + 1;
-      break;
+  // Find CRLFCRLF
+  $header_end = \strpos($buffer, "\r\n\r\n", $offset);
+  if ($header_end === false) {
+    if ($len > $max_header_size) {
+      return ['__invalid' => 413];
     }
-  }
-
-  if (-1 === $header_end) {
-    $offset = $len;
     return null;
   }
+
+  $header_end += 4;
 
   if ($header_end > $max_header_size) {
     return ['__invalid' => 413];
@@ -384,33 +409,81 @@ function parse_kv(string $str, array &$out): void {
   }
 }
 
-function handle_fast($sock, array $req): void {
-  static $header = "HTTP/1.1 200 OK\r\n"."Content-Length: ";
-  if ('/' === $req['r_path']) {
-    fwrite($sock, resp_static);
-    return;
-  
+function handle_fast($sock, array $req, array $state): void {
+  static $base = "HTTP/1.1 200 OK\r\nContent-Length: ";
+
+  if ($req['r_uri'] === '/') {
+    $body = "hello";
   } else {
-    $body = "Path: ".$req['r_path'];
-    $len  = \strlen($body);
-    $out = $header."{$len}\r\n"."Connection: keep-alive\r\n\r\n".$body;
-    fwrite($sock, $out);
+    $body = "Path: " . $req['r_uri'];
+  }
+
+  $len = strlen($body);
+  $headers = $base . $len . "\r\n";
+
+  if (isset($req['r_close']) && $req['r_close']) {
+    $headers .= "Connection: close\r\n";
+  } else {
+    $headers .= "Connection: keep-alive\r\n";
+  }
+
+  $headers .= "\r\n";
+  $response = $headers . $body;
+  $written = 0;
+  $total = strlen($response);
+
+  while ($written < $total) {
+    $n = @fwrite($sock, substr($response, $written));
+    if ($n === false || $n === 0) {
+      break;
+    }
+    $written += $n;
+  }
+
+  if (isset($req['r_close']) && $req['r_close']) {
+    if ($state['timer']) {
+      $state['timer']->stop();
+    }
+
+    fclose($sock);
   }
 }
 
+function http_status_code(): array {
+  static $rt = [
+    400 => "Bad Request",
+    405 => "Method Not Allowed",
+    408 => "Request Timeout",
+    413 => "Payload Too Large",
+    414 => "URI Too Long",
+    501 => "Not Implemented",
+  ];
+  return $rt;
+}
+
 function drop_connection($sock, int $code): void {
-  $msg = match ($code) {
-    400 => "400 Bad Request",
-    405 => "405 Method Not Allowed",
-    408 => "408 Request Timeout",
-    413 => "413 Payload Too Large",
-    414 => "414 URI Too Long",
-    default => "400 Bad Request"
-  };
+  static $code_ar = null;
+  $code_ar ??= http_status_code();
+  $msg = $code_ar[$code] ?? "Bad Request";
   $body = $msg;
-  $out = "HTTP/1.1 {$msg}\r\n"."Content-Length: ".strlen($body)."\r\n"."Connection: close\r\n\r\n".$body;
+  $out = "HTTP/1.1 $code $msg\r\n";
+  $out .= "Content-Length: ".strlen($body)."\r\n";
+  $out .= "Connection: close\r\n\r\n";
+  $out .= $body;
+
   fwrite($sock, $out);
   fclose($sock);
+}
+
+function should_close(string $http, array $headers): bool {
+  $conn = strtolower($headers['connection'] ?? '');
+
+  if ($http === 'HTTP/1.0') {
+    return $conn !== 'keep-alive';
+  }
+
+  // HTTP/1.1 default keep-alive
+  return $conn === 'close';
 }
 
 function cpu_count(): int{
