@@ -1,5 +1,5 @@
 # XZ Web Server
-XZ Web Server is a minimal high performance classless php web server.
+XZ Web Server is a minimal high performance classless php web server. not a HTTP RFC fully compliance.
 
 # Get Started
 
