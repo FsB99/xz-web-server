@@ -260,7 +260,6 @@ function parse_request(string &$buffer, int &$offset): ?array {
   $len = \strlen($buffer);
   $headers = $cookies = $get = $post = $files = [];
 
-  // Find CRLFCRLF
   $header_end = \strpos($buffer, "\r\n\r\n", $offset);
   if ($header_end === false) {
     if ($len > $max_header_size) {
@@ -283,10 +282,10 @@ function parse_request(string &$buffer, int &$offset): ?array {
   if (false === $sp1) return ['__invalid' => 400];
 
   $sp2 = \strpos($buffer, ' ', $sp1 + 1);
-  if (false === $sp2) return ['__invalid' => 400];
+  if (false === $sp2 || $sp2 > $line_end) return ['__invalid' => 400];
 
   $method = \strtolower(\substr($buffer, $offset, $sp1 - $offset));
-  if (! \in_array($method, ['get', 'post', 'head'])) {
+  if (! \in_array($method, ['get', 'post', 'head'], true)) {
     return ['__invalid' => 405];
   }
 
@@ -295,13 +294,11 @@ function parse_request(string &$buffer, int &$offset): ?array {
     return ['__invalid' => 414];
   }
 
-  // http version check
   $http = \substr($buffer, $sp2 + 1, $line_end - $sp2 - 1);
-  if (! \in_array($http, ['HTTP/1.1', 'HTTP/1.0'])) {
+  if (! \in_array($http, ['HTTP/1.1', 'HTTP/1.0'], true)) {
     return ['__invalid' => 400];
   }
 
-  // split path + query
   $qpos = \strpos($uri, '?');
   if (false === $qpos) {
     $path = $uri;
@@ -311,7 +308,6 @@ function parse_request(string &$buffer, int &$offset): ?array {
     $query_str = \substr($uri, $qpos + 1);
   }
 
-  // headers
   $content_length = 0;
   $h_start = $line_end + 2;
 
@@ -321,12 +317,27 @@ function parse_request(string &$buffer, int &$offset): ?array {
 
     $colon = \strpos($buffer, ':', $h_start);
     if (false !== $colon && $colon < $h_end) {
-      $key = \strtolower(\trim(\substr($buffer, $h_start, $colon - $h_start)));
+      $raw_key = \substr($buffer, $h_start, $colon - $h_start);
+      $key = \strtolower(\trim($raw_key));
       $val = \trim(\substr($buffer, $colon + 1, $h_end - $colon - 1));
+
+      if (!\preg_match('#^[a-z0-9\-]+$#', $key)) {
+        return ['__invalid' => 400];
+      }
+
+      if (\str_contains($val, "\r") || \str_contains($val, "\n")) {
+        return ['__invalid' => 400];
+      }
+
       $headers[$key] = $val;
 
-      if (\in_array($key, ['content-length', 'Content-Length'])) {
+      if ($key === 'content-length') {
+        if (!\ctype_digit($val)) {
+          return ['__invalid' => 400];
+        }
+
         $content_length = (int) $val;
+
         if ($content_length < 0 || $content_length > $max_body_size) {
           return ['__invalid' => 413];
         }
@@ -340,23 +351,25 @@ function parse_request(string &$buffer, int &$offset): ?array {
     $h_start = $h_end + 2;
   }
 
+  if ('HTTP/1.1' === $http && !isset($headers['host'])) {
+    return ['__invalid' => 400];
+  }
+
   $total = $header_end + $content_length;
   if ($len < $total) return null;
-  $body = $content_length > 0 ? substr($buffer, $header_end, $content_length) : '';
 
-  // get
+  $body = $content_length > 0 ? \substr($buffer, $header_end, $content_length) : '';
+
   if ($query_str !== '') {
     parse_kv($query_str, $get);
   }
 
-  // post (urlencoded only)
   if ('post' === $method && $content_length > 0) {
-    if (isset($headers['content-type']) && str_contains($headers['content-type'], 'application/x-www-form-urlencoded')) {
+    if (isset($headers['content-type']) && \str_contains($headers['content-type'], 'application/x-www-form-urlencoded')) {
       parse_kv($body, $post);
     }
   }
 
-  // shift buffer
   $buffer = \substr($buffer, $total);
   $offset = 0;
 
@@ -371,6 +384,8 @@ function parse_request(string &$buffer, int &$offset): ?array {
     'r_get' => $get,
     'r_post' => $post,
     'r_body' => $body,
+    'r_close'  => isset($headers['connection']) && \strtolower($headers['connection']) === 'close',
+    'r_expect_continue' => isset($headers['expect']) && \strtolower($headers['expect']) === '100-continue'
   ];
 }
 
@@ -411,6 +426,10 @@ function parse_kv(string $str, array &$out): void {
 
 function handle_fast($sock, array $req, array $state): void {
   static $base = "HTTP/1.1 200 OK\r\nContent-Length: ";
+
+  if (!empty($req['r_expect_continue'])) {
+    fwrite($sock, "HTTP/1.1 100 Continue\r\n\r\n");
+  }
 
   if ($req['r_uri'] === '/') {
     $body = "hello";
