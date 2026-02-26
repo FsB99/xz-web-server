@@ -12,5 +12,5 @@ php server.php
 | Product | Performance. RPS |
 | --- | --- |
 | Go (std http) | ~209.734 |
-| XZ Server (Unix) | ~326.849 |
-| XZ Server (Unix with EV) | ~347.768 |
+| XZ (Unix) | ~326.849 |
+| XZ (Unix with EV) | ~347.768 |
