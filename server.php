@@ -309,6 +309,8 @@ function parse_request(string &$buffer, int &$offset): ?array {
   }
 
   $content_length = 0;
+  $content_length_seen = false;
+  $transfer_encoding_seen = false;
   $h_start = $line_end + 2;
 
   while ($h_start < $header_end - 2) {
@@ -331,12 +333,24 @@ function parse_request(string &$buffer, int &$offset): ?array {
 
       $headers[$key] = $val;
 
+      if ('transfer-encoding' === $key) {
+        $transfer_encoding_seen = true;
+      }
+
       if ($key === 'content-length') {
         if (!\ctype_digit($val)) {
           return ['__invalid' => 400];
         }
 
-        $content_length = (int) $val;
+        if ($content_length_seen) {
+          if ((int)$val !== $content_length) {
+            return ['__invalid' => 400];
+          }
+          return ['__invalid' => 400];
+        }
+
+        $content_length_seen = true;
+        $content_length = (int)$val;
 
         if ($content_length < 0 || $content_length > $max_body_size) {
           return ['__invalid' => 413];
@@ -349,6 +363,14 @@ function parse_request(string &$buffer, int &$offset): ?array {
     }
 
     $h_start = $h_end + 2;
+  }
+
+  if ($transfer_encoding_seen) {
+    return ['__invalid' => 501];
+  }
+
+  if ($transfer_encoding_seen && $content_length_seen) {
+    return ['__invalid' => 400];
   }
 
   if ('HTTP/1.1' === $http && !isset($headers['host'])) {
@@ -364,7 +386,7 @@ function parse_request(string &$buffer, int &$offset): ?array {
 
   $body = $content_length > 0 ? \substr($buffer, $header_end, $content_length) : '';
 
-  if ($query_str !== '') {
+  if ('' !== $query_str) {
     parse_kv($query_str, $get);
   }
 
