@@ -196,7 +196,7 @@ function loop_select($server): void {
         continue;
       }
 
-      $id   = (int)$sock;
+      $id = (int) $sock;
       $data = fread($sock, 8192);
 
       if ('' === $data || false === $data) {
@@ -280,17 +280,10 @@ function parse_request(string &$buffer, int &$offset): ?array {
   if (! \in_array($http, ['HTTP/1.1', 'HTTP/1.0'], true)) return ['__invalid' => 400];
 
   $qpos = \strpos($uri, '?');
-  if (false === $qpos) {
-    $path = $uri;
-    $query_str = '';
-  } else {
-    $path = \substr($uri, 0, $qpos);
-    $query_str = \substr($uri, $qpos + 1);
-  }
-
+  $path = (false === $qpos) ? $uri : \substr($uri, 0, $qpos);
+  $query_str = (false === $qpos) ? '' : \substr($uri, $qpos + 1);
   $content_length = 0;
-  $content_length_seen = false;
-  $transfer_encoding_seen = false;
+  $content_length_seen = $transfer_encoding_seen = false;
   $h_start = $line_end + 2;
 
   while ($h_start < $header_end - 2) {
@@ -298,6 +291,7 @@ function parse_request(string &$buffer, int &$offset): ?array {
     if (false === $h_end) break;
 
     $colon = \strpos($buffer, ':', $h_start);
+    
     if (false !== $colon && $colon < $h_end) {
       $raw_key = \substr($buffer, $h_start, $colon - $h_start);
       $key = \strtolower(\trim($raw_key));
