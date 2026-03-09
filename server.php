@@ -24,6 +24,4 @@ $GLOBALS['routes'] = [
 include './module/webf.php';
 include './module/http.php';
 
-if (\in_array(PHP_SAPI, ['cli', 'micro'])) {
-  server_start($server_cnf['host'], $server_cnf['port'], $server_cnf['workers']);
-}
+if (\in_array(PHP_SAPI, ['cli', 'micro'])) server_start($server_cnf['host'], $server_cnf['port'], $server_cnf['workers']);
