@@ -23,73 +23,9 @@ declare(strict_types=1);
 
 // https://capec.mitre.org/data/definitions/272.html
 
-$GLOBALS['crs_rules'] = [
-  [
-    'id' => 920170,
-    'phase' => 1,
-    'rule' => [
-      ['w' => 'method', 't' => 'in', 'v' => ['GET','HEAD']],
-      ['w' => 'header', 'wpr' => 'Content-Length', 'eq' => '0'],
-    ],
-    'pl' => 1,
-    'atk_cat' => ['protocol'],
-    'capec' => [1000, 210, 272],
-    'score' => 5,
-  ],
-  [
-    'id' => 920171,
-    'phase' => 1,
-    'rule' => [
-      ['w' => 'method', 't' => 'in', 'v' => ['GET','HEAD']],
-      ['w' => 'header', 'wpr' => 'Content-Length', 'eq' => '0'],
-    ],
-    'pl' => 1,
-    'atk_cat' => ['protocol'],
-    'capec' => [1000, 210, 272],
-    'score' => 5,
-  ],
-  [
-    'id' => 920181,
-    'phase' => 1,
-    'rule' => [
-      ['w' => 'header', 'wpr' => 'Transfer-Encoding', 'eq' => '0'],
-    ],
-    'pl' => 1,
-    'atk_cat' => ['protocol'],
-    'capec' => [1000, 210, 272],
-    'score' => 4,
-  ],
-  [
-    'id' => 920190,
-    'phase' => 1,
-    'rule' => [
-      ['w' => 'header', 'wpr' => 'Range', 'rx' => '~(\d+)-(\d+)~'],
-    ],
-    'pl' => 1,
-    'atk_cat' => ['protocol'],
-    'capec' => [1000, 210, 272],
-    'score' => 5,
-  ],
-  [
-    'id' => 920660,
-    'phase' => 1,
-    'rule' => [
-      ['w' => 'header', 'wpr' => 'Request-Range', 'eq' => '0'],
-    ],
-    'pl' => 1,
-    'atk_cat' => ['protocol'],
-    'capec' => [1000, 210, 272],
-    'score' => 4,
-  ],
-  [
-    'id' => 920210,
-    'phase' => 1,
-    'rule' => [
-      ['w' => 'header', 'wpr' => 'Connection', 'rx' => '~\b(?:keep-alive|close),\s?(?:keep-alive|close)\b~'],
-    ],
-    'pl' => 1,
-    'atk_cat' => ['protocol'],
-    'capec' => [1000, 210, 272],
-    'score' => 4,
-  ]
-];
+$r911 = include './module/firewall/911.php';
+$r913 = include './module/firewall/913.php';
+$r920 = include './module/firewall/920.php';
+$crs_rules_raw = array_merge($r911, $r913, $r920);
+
+$GLOBALS['crs_rules'] = $crs_rules_raw;

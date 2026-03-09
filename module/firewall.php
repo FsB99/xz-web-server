@@ -23,19 +23,29 @@ function firewall_compile(array $rules): array{
     ];
 
     foreach ($r['rule'] as $c) {
+      $vars = (array) ($c['w'] ?? '');
+
       $cond = [
-        'var' => $c['w'],
+        'var' => $vars,
         'key' => strtolower($c['wpr'] ?? '')
       ];
+
+      if (isset($c['not'])) {
+        $cond['not']  = $c['not'];
+      }
 
       if (isset($c['eq'])) {
         $cond['op']  = 'eq';
         $cond['val'] = $c['eq'];
 
+      } elseif (isset($c['maxl'])) {
+        $cond['op']  = 'maxl';
+        $cond['val'] = $c['maxl'];
+
       } elseif (isset($c['in'])) {
         $set = [];
 
-        foreach ($c['in'] as $v) $set[$v] = 1;
+        foreach ($c['in'] as $v) $set[strtoupper($v)] = 1;
 
         $cond['op']  = 'in';
         $cond['val'] = $set;
@@ -49,7 +59,6 @@ function firewall_compile(array $rules): array{
         $cond['val'] = $c['rx'];
 
       } else {
-        // invalid rule, skip safely
         continue;
       }
 
@@ -77,17 +86,25 @@ function firewall_get_var(array $req, string $var, string $key): array|string|nu
 }
 
 function firewall_match_cond(array $cond, array $req): bool{
-  $v = firewall_get_var($req, $cond['var'], $cond['key']);
+  foreach ($cond['var'] as $var) {
+    $v = firewall_get_var($req, $var, $cond['key']);
+    if ($v === null) continue;
+    
+    $ok = match ($cond['op']) {
+      'eq' => $v === $cond['val'],
+      'in' => (bool) isset($cond['val'][\strtoupper($v)]),
+      'maxl' => \strlen($v) > $cond['val'],
+      'contains' => \str_contains($v, $cond['val']),
+      'rx' => (bool) \preg_match($cond['val'], $v),
+      default => false,
+    };
 
-  if ($v === null) return false;
+    // invert logic if 'not' is set
+    if (! empty($cond['not'])) $ok = !$ok;
+    if ($ok) return true;
+  }
 
-  return match ($cond['op']) {
-    'eq' => $v === $cond['val'],
-    'in' => isset($cond['val'][$v]),
-    'contains' => \str_contains($v, $cond['val']),
-    'rx' => (bool) \preg_match($cond['val'], $v),
-    default => false
-  };
+  return false;
 }
 
 function firewall_run(array $req): bool{
@@ -103,9 +120,16 @@ function firewall_run(array $req): bool{
 
   foreach ([1,2] as $phase) {
     foreach ($CRS[$phase] as $rule) {
+      $matched = true;
+
       foreach ($rule['conds'] as $cond) {
-        if (! firewall_match_cond($cond, $req)) continue 2;
+        if (! firewall_match_cond($cond, $req)) {
+          $matched = false;
+          break;
+        }
       }
+
+      if (!$matched) continue;
 
       $score += $rule['score'];
       $hits[] = $rule['id'];
@@ -115,14 +139,29 @@ function firewall_run(array $req): bool{
   }
 
   if ($score >= $threshold) {
-    // maybe log this crap.
-    // $rs = [
-    //   'score' => $score,
-    //   'hits' => $hits,
-    //   'blocked' => $score >= $threshold
-    // ];
-    // print_r($rs);
+    // todo, maybe log this, but for now just print on CLI
+    $rs = [
+      'score' => $score,
+      'hits' => $hits,
+      'blocked' => $score >= $threshold
+    ];
+    print_r($rs);
     $rt = true;
+  }
+  return $rt;
+}
+
+function firewall_readfile(string $file): array {
+  $rt = [];
+
+  if (\is_file($file)) {
+    $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+    foreach ($lines as $line) {
+      $line = \trim($line);
+      if ('' === $line  || '#' === $line[0]) continue;
+      $rt[] = $line;
+    }
   }
   return $rt;
 }
