@@ -16,3 +16,4 @@ php server.php
 | XZ (Unix with EV) | ~347.768 |
 
 # NOTES
+[Developer Notes Link](https://github.com/FsB99/xz-web-server/blob/main/Notes.md)
