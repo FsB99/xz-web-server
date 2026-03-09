@@ -6,12 +6,13 @@ return [
   [
     'id' => 911100,
     'phase' => 1,
-    'rule' => [
-      ['w' => ['method'], 'in' => ['GET', 'HEAD', 'POST'], 'not' => true],
-    ],
     'pl' => 1,
     'atk_cat' => ['generic'],
     'capec' => [1000, 210, 272, 220, 274],
     'score' => 5,
+    'msg' => 'Method is not allowed by policy',
+    'rule' => [
+      ['w' => ['method'], 'in' => ['GET', 'HEAD', 'POST'], 'not' => true],
+    ],
   ],
 ];

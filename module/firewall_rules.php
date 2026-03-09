@@ -26,6 +26,8 @@ if (! \defined('ABSPATH')) exit(0);
 $r911 = include './module/firewall/911.php';
 $r913 = include './module/firewall/913.php';
 $r920 = include './module/firewall/920.php';
-$crs_rules_raw = array_merge($r911, $r913, $r920);
+$r921 = include './module/firewall/921.php';
+$r930 = include './module/firewall/930.php';
+$crs_rules_raw = array_merge($r911, $r913, $r920, $r921, $r930);
 
 $GLOBALS['crs_rules'] = $crs_rules_raw;

@@ -9,12 +9,13 @@ return [
   [
     'id' => 913100,
     'phase' => 1,
-    'rule' => [
-      ['w' => ['header'], 'wpr' => 'User-Agent', 'rx' => $rx_913100],
-    ],
     'pl' => 1,
     'atk_cat' => ['reputation_scanner'],
     'capec' => [1000, 118, 224, 541, 310],
     'score' => 5,
+    'msg' => 'Found User-Agent associated with security scanner',
+    'rule' => [
+      ['w' => ['header'], 'wpr' => 'User-Agent', 'rx' => $rx_913100],
+    ],
   ],
 ];

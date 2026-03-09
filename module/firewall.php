@@ -79,9 +79,13 @@ function firewall_get_var(array $req, string $var, string $key): array|string|nu
     'path' => $req['r_path'],
     'body' => $req['r_body'],
     'header' => $req['r_head'][$key] ?? null,
+    'header_name' => array_keys($req['r_head']) ?? null,
     'cookie' => $req['r_cookie'][$key] ?? null,
+    'cookie_name' => array_keys($req['r_cookie']) ?? null,
     'get' => $req['r_get'][$key] ?? null,
+    'get_name' => array_keys($req['r_get']) ?? null,
     'post' => $req['r_post'][$key] ?? null,
+    'get_name' => array_keys($req['r_post']) ?? null,
     default => null
   };
 }
@@ -90,19 +94,89 @@ function firewall_match_cond(array $cond, array $req): bool{
   foreach ($cond['var'] as $var) {
     $v = firewall_get_var($req, $var, $cond['key']);
     if ($v === null) continue;
-    
-    $ok = match ($cond['op']) {
-      'eq' => $v === $cond['val'],
-      'in' => (bool) isset($cond['val'][\strtoupper($v)]),
-      'maxl' => \strlen($v) > $cond['val'],
-      'contains' => \str_contains($v, $cond['val']),
-      'rx' => (bool) \preg_match($cond['val'], $v),
-      default => false,
-    };
 
-    // invert logic if 'not' is set
-    if (! empty($cond['not'])) $ok = !$ok;
-    if ($ok) return true;
+    // debug
+    // print_r($v);
+    // echo PHP_EOL;
+
+    if (is_array($v)) {
+      // flat array
+      $pass = true;
+      if ($flat_ar = firewall_array_is_flat($v)) {
+        foreach ($v as $vv) {
+          $ok = match ($cond['op']) {
+            'eq' => $vv === $cond['val'],
+            'in' => (bool) isset($cond['val'][\strtoupper($vv)]),
+            'maxl' => \strlen($vv) > $cond['val'],
+            'contains' => \str_contains($vv, $cond['val']),
+            'rx' => (bool) \preg_match($cond['val'], $vv),
+            default => false,
+          };
+
+          // invert logic if 'not' is set
+          if (! empty($cond['not'])) $ok = !$ok;
+          if (! $ok) {
+            $pass = false;
+            break;
+          }
+        }
+
+        return $pass;
+      
+      // associative array
+      } else {
+        $pass = true;
+        foreach ($v as $k => $vv) {
+          // key 
+          $ok_key = match ($cond['op']) {
+            'eq' => $k === $cond['val'],
+            'in' => (bool) isset($cond['val'][\strtoupper($k)]),
+            'maxl' => \strlen($k) > $cond['val'],
+            'contains' => \str_contains($k, $cond['val']),
+            'rx' => (bool) \preg_match($cond['val'], $k),
+            default => false,
+          };
+
+          // invert logic if 'not' is set
+          if (! empty($cond['not'])) $ok_key = !$ok_key;
+          if (! $ok_key) {
+            $pass = false;
+            break;
+          }
+
+          // value 
+          $ok_value = match ($cond['op']) {
+            'eq' => $vv === $cond['val'],
+            'in' => (bool) isset($cond['val'][\strtoupper($vv)]),
+            'maxl' => \strlen($vv) > $cond['val'],
+            'contains' => \str_contains($vv, $cond['val']),
+            'rx' => (bool) \preg_match($cond['val'], $vv),
+            default => false,
+          };
+
+          // invert logic if 'not' is set
+          if (! empty($cond['not'])) $ok_value = !$ok_value;
+          if (! $ok_value) {
+            $pass = false;
+            break;
+          }
+        }
+      }
+
+    } else {
+      $ok = match ($cond['op']) {
+        'eq' => $v === $cond['val'],
+        'in' => (bool) isset($cond['val'][\strtoupper($v)]),
+        'maxl' => \strlen($v) > $cond['val'],
+        'contains' => \str_contains($v, $cond['val']),
+        'rx' => (bool) \preg_match($cond['val'], $v),
+        default => false,
+      };
+
+      // invert logic if 'not' is set
+      if (! empty($cond['not'])) $ok = !$ok;
+      if ($ok) return true;
+    }
   }
 
   return false;
@@ -165,4 +239,8 @@ function firewall_readfile(string $file): array {
     }
   }
   return $rt;
+}
+
+function firewall_array_is_flat(array $array): bool {
+  return array_keys($array) === range(0, count($array) - 1);
 }

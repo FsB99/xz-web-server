@@ -1,0 +1,186 @@
+<?php
+// XZ Web Server by Fsb
+if (! \defined('ABSPATH')) exit(0);
+
+return [
+  [
+    'id' => 921110,
+    'phase' => 2,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272, 220, 33],
+    'score' => 5,
+    'msg' => 'HTTP Request Smuggling Attack',
+    'rule' => [
+      ['w' => ['body', 'get'], 'rx' => '~(?:get|p(?:(?:os|u)t|atch|rop(?:find|atch))|head|options|co(?:nnect|py)|delete|trac[ek]|m(?:kcol|ove)|(?:un)?lock)[\s\x0b]+[^\s\x0b]+[\s\x0b]+http/[0-9]~'],
+    ],
+  ],
+  [
+    'id' => 921120,
+    'phase' => 2,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272, 220, 34],
+    'score' => 5,
+    'msg' => 'HTTP Response Splitting Attack',
+    'rule' => [
+      ['w' => ['cookie', 'get'], 'rx' => '~[\n\r][^0-9A-Z_a-z]*?(?:content-(?:type|length)|set-cookie|location):[\s\x0b]*[0-9A-Z_a-z]~'],
+    ],
+  ],
+  [
+    'id' => 921130,
+    'phase' => 2,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272, 220, 34],
+    'score' => 5,
+    'msg' => 'HTTP Response Splitting Attack',
+    'rule' => [
+      ['w' => ['cookie', 'get'], 'rx' => '~(?:\bhttp/\d|<(?:html|meta)\b)~'],
+    ],
+  ],
+  [
+    'id' => 921140,
+    'phase' => 1,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272, 220, 273],
+    'score' => 5,
+    'msg' => 'HTTP Header Injection Attack via headers',
+    'rule' => [
+      ['w' => ['header'], 'rx' => '~[\n\r]~'],
+    ],
+  ],
+  [
+    'id' => 921150,
+    'phase' => 1,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272, 220, 33],
+    'score' => 5,
+    'msg' => 'HTTP Header Injection Attack via payload (CR/LF detected)',
+    'rule' => [
+      ['w' => ['get_name'], 'rx' => '~[\n\r]~'],
+    ],
+  ],
+  [
+    'id' => 921160,
+    'phase' => 1,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272, 220, 33],
+    'score' => 5,
+    'msg' => 'HTTP Header Injection Attack via payload (CR/LF and header-name detected)',
+    'rule' => [
+      ['w' => ['get'], 'rx' => '~[\n\r]+(?:[\s\x0b]|location|re(?:fresh|mote-(?:ip|addr))|(?:set-)?cookie|forwarded-(?:(?:fo|serve)r|host)|host|via|originating-IP|x-(?:forwarded-(?:(?:fo|serve)r|host)|host|via|remote-(?:ip|addr)|originating-IP))[\s\x0b]*:~'],
+    ],
+  ],
+  [
+    'id' => 921190,
+    'phase' => 1,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272, 220, 34],
+    'score' => 5,
+    'msg' => 'HTTP Splitting (CR/LF in request filename detected)',
+    'rule' => [
+      ['w' => ['files_name'], 'rx' => '~[\n\r]~'],
+    ],
+  ],
+  [
+    'id' => 921200,
+    'phase' => 2,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 152, 248, 136],
+    'score' => 5,
+    'msg' => 'LDAP Injection Attack',
+    'rule' => [
+      ['w' => ['files_name'], 'rx' => '~^[^!&\(\):<>\|~]*\)[\s\x0b]*(?:\((?:[^!&\(\),<->\|~]+[<>~]?=|[\s\x0b]*[!&\|][\s\x0b]*[\(\)]?[\s\x0b]*)|\)[\s\x0b]*\([\s\x0b]*[!&\|][\s\x0b]*|[!&\|][\s\x0b]*\([^!&\(\),<->\|~]+[<>~]?=[^!&\(\):<>\|~]*)~'],
+    ],
+  ],
+  [
+    'id' => 921421,
+    'phase' => 1,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 255, 153],
+    'score' => 5,
+    'msg' => 'Content-Type header: Dangerous content type outside the mime type declaration',
+    'rule' => [
+      ['w' => ['header'], 'wpr' => 'Content-Type', 'rx' => '~^[^\s\x0b,;]+[\s\x0b,;].*?(?:application/(?:.+\+)?json|(?:application/(?:soap\+)?|text/)xml)~'],
+    ],
+  ],
+  [
+    'id' => 921240,
+    'phase' => 1,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272, 220, 33],
+    'score' => 5,
+    'msg' => 'mod_proxy attack attempt detected',
+    'rule' => [
+      ['w' => ['uri'], 'rx' => '~unix:[^|]*\|~'],
+    ],
+  ],
+  [
+    'id' => 921151,
+    'phase' => 1,
+    'pl' => 2,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272, 220, 33],
+    'score' => 5,
+    'msg' => 'HTTP Header Injection Attack via payload (CR/LF detected)',
+    'rule' => [
+      ['w' => ['get'], 'rx' => '~[\n\r]~'],
+    ],
+  ],
+  [
+    'id' => 921422,
+    'phase' => 1,
+    'pl' => 2,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 255, 153],
+    'score' => 5,
+    'msg' => 'Content-Type header: Dangerous content type outside the mime type declaration',
+    'rule' => [
+      ['w' => ['header'], 'wpr' => 'Content-Type', 'rx' => '~^[^\s\x0b,;]+[\s\x0b,;].*?\b(?:((?:tex|multipar)t|application)|((?:audi|vide)o|image|cs[sv]|(?:vn|relate)d|p(?:df|lain)|json|(?:soa|cs)p|x(?:ml|-www-form-urlencoded)|form-data|x-amf|(?:octe|repor)t|stream)|([\+/]))\b~'],
+    ],
+  ],
+  // [
+  //   'id' => 921230,
+  //   'phase' => 1,
+  //   'pl' => 3,
+  //   'atk_cat' => ['protocol'],
+  //   'capec' => [1000, 210, 272, 220],
+  //   'score' => 5,
+  //   'msg' => 'HTTP Range Header detected',
+  //   'rule' => [
+  //     ['w' => ['header'], 'wpr' => 'Range', 'gt' => '0'],
+  //   ],
+  // ],
+  [
+    'id' => 921210,
+    'phase' => 2,
+    'pl' => 3,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 152, 137, 15, 460],
+    'score' => 5,
+    'msg' => 'HTTP Parameter Pollution after detecting bogus char after parameter array',
+    'rule' => [
+      ['w' => ['get_name'], 'rx' => '~(][^\]]+$|][^\]]+\[)~'],
+    ],
+  ],
+  [
+    'id' => 921220,
+    'phase' => 2,
+    'pl' => 4,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 152, 137, 15, 460],
+    'score' => 5,
+    'msg' => 'HTTP Parameter Pollution possible via array notation',
+    'rule' => [
+      ['w' => ['get_name'], 'rx' => '~\[~'],
+    ],
+  ],
+];
