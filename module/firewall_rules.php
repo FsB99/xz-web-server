@@ -1,6 +1,6 @@
 <?php
 // XZ Web Server by Fsb
-declare(strict_types=1);
+if (! \defined('ABSPATH')) exit(0);
 
 // credited to : https://github.com/coreruleset/coreruleset
 // Since CRS used regex and SecLang, this will be the re-implementasion for lightweight and performance wise for PHP

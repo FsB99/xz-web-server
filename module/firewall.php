@@ -1,5 +1,6 @@
 <?php
 // XZ Web Server by Fsb
+if (! \defined('ABSPATH')) exit(0);
 
 $firewall_file = './module/firewall_rules.php';
 

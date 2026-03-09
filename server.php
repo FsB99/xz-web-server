@@ -1,6 +1,7 @@
 <?php
 // XZ Web Server by Fsb
 declare(strict_types=1);
+define('ABSPATH', __DIR__);
 set_time_limit(0);
 error_reporting(E_ALL);
 

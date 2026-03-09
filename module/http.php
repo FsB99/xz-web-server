@@ -1,8 +1,6 @@
 <?php
 // XZ Web Server by Fsb
-declare(strict_types=1);
-set_time_limit(0);
-error_reporting(E_ALL);
+if (! \defined('ABSPATH')) exit(0);
 
 global $server_cnf;
 $server_cnf['workers'] = cpu_count();
