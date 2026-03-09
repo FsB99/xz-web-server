@@ -79,9 +79,18 @@ function loop_ev($server): void {
     $max_header_size = $server_cnf['max_header_size'] ?? 8192;
     $server_idle = $server_cnf['idle_second'] ?? 10;
   }
+
+  static $firewall_on = null;
+  if (\is_null($firewall_on)) {
+    global $server_cnf;
+    $module_enabled = $server_cnf['module_enabled'] ?? [];
+    if (\in_array('firewall', $module_enabled)) {
+      $firewall_on = true;
+    }
+  }
   
   $loop = EvLoop::defaultLoop();
-  $watchers['server'] = $loop->io($server, Ev::READ, function ($w) use ($server, $loop, &$watchers, $max_header_size, &$server_idle) {
+  $watchers['server'] = $loop->io($server, Ev::READ, function ($w) use ($server, $loop, &$watchers, $max_header_size, &$server_idle, &$firewall_on) {
     while ($client = @stream_socket_accept($server, 0)) {
       stream_set_blocking($client, false);
       $timerWatcher = null;
@@ -92,7 +101,7 @@ function loop_ev($server): void {
         'timer'  => null,
       ];
 
-      $watcher = $loop->io($client, Ev::READ, function ($cw) use ($max_header_size, $watchers) {
+      $watcher = $loop->io($client, Ev::READ, function ($cw) use ($max_header_size, $watchers, $firewall_on) {
         $state = &$cw->data;
         $sock  = $state['sock'];
 
@@ -119,6 +128,14 @@ function loop_ev($server): void {
         while (true) {
           $req = parse_request($state['buffer'], $state['offset']);
           if (\is_null($req)) break;
+
+          if ($firewall_on) {
+            if (firewall_run($req)) {
+              drop_connection($sock, 401);
+              $cw->stop();
+              return;
+            }
+          }
 
           if (isset($req['__invalid'])) {
             drop_connection($sock, $req['__invalid']);
@@ -158,6 +175,15 @@ function loop_select($server): void {
   if (is_null($max_header_size)) {
     global $server_cnf;
     $max_header_size = $server_cnf['max_header_size'] ?? 8192;
+  }
+
+  static $firewall_on = null;
+  if (\is_null($firewall_on)) {
+    global $server_cnf;
+    $module_enabled = $server_cnf['module_enabled'] ?? [];
+    if (\in_array('firewall', $module_enabled)) {
+      $firewall_on = true;
+    }
   }
 
   while (true) {
@@ -202,6 +228,15 @@ function loop_select($server): void {
       while (true) {
         $req = parse_request($__buffers[$id], $__offsets[$id]);
         if (\is_null($req)) break;
+
+        if ($firewall_on) {
+          if (firewall_run($req)) {
+            drop_connection($sock, 401);
+            if (\is_resource($sock)) fclose($sock);
+            unset($__clients[$id], $__buffers[$id], $__offsets[$id]);
+            break;
+          }
+        }
 
         if (isset($req['__invalid'])) {
           drop_connection($sock, $req['__invalid']);
@@ -324,7 +359,7 @@ function parse_request(string &$buffer, int &$offset): ?array {
   $buffer = \substr($buffer, $total);
   $offset = 0;
 
-  return [
+  $rt = [
     'r_ver' => $http,
     'r_head' => $headers,
     'r_ip' => null,
@@ -339,6 +374,8 @@ function parse_request(string &$buffer, int &$offset): ?array {
     'r_close'  => isset($headers['connection']) && \strtolower($headers['connection']) === 'close',
     'r_expect_continue' => isset($headers['expect']) && \strtolower($headers['expect']) === '100-continue'
   ];
+  
+  return $rt;
 }
 
 function parse_kv(string $str, array &$out): void {
@@ -382,6 +419,7 @@ function http_status_code(): array {
     301 => '301 Moved Permanently',
     302 => '302 Found',
     400 => '400 Bad Request',
+    401 => '401 Unauthorized',
     403 => '403 Forbidden',
     404 => '404 Not Found',
     405 => "405 Method Not Allowed",

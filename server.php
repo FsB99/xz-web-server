@@ -14,6 +14,8 @@ $GLOBALS['server_cnf'] = [
   'os' => (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'win' : 'unix'),
   'ext_ev' => extension_loaded('ev'),
   'ext_pcntl' => function_exists('pcntl_fork'),
+  'module_list' => ['firewall'],
+  'module_enabled' => ['firewall'],
 ];
 
 $GLOBALS['routes'] = [
@@ -23,5 +25,20 @@ $GLOBALS['routes'] = [
 
 include './module/webf.php';
 include './module/http.php';
+
+static $module_enabled = null, $module_list = null;
+if (\is_null($module_enabled)) {
+  global $server_cnf;
+  $module_enabled = $server_cnf['module_enabled'] ?? [];
+  $module_list = $server_cnf['module_list'] ?? [];
+}
+
+foreach ($module_enabled as &$me) {
+  if (\in_array($me, $module_list)) {
+    include './module/'.$me.'.php';
+    echo 'Load module: '.$me.PHP_EOL;
+  }
+}
+echo PHP_EOL;
 
 if (\in_array(PHP_SAPI, ['cli', 'micro'])) server_start($server_cnf['host'], $server_cnf['port'], $server_cnf['workers']);
