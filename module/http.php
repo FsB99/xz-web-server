@@ -110,7 +110,7 @@ function loop_ev($server): void {
           if ($state['timer']) $state['timer']->stop();
 
           $cw->stop();
-          fclose($sock);
+          if (\is_resource($sock)) fclose($sock);
           unset($watchers[(int)$sock]);
           return;
         }
@@ -153,7 +153,7 @@ function loop_ev($server): void {
         0,
         function ($tw) use (&$watcher, $client, $watchers) {
           $watcher->stop();
-          fclose($client);
+          if (\is_resource($client)) fclose($client);
           unset($watchers[(int)$client]);
         }
       );
@@ -209,7 +209,7 @@ function loop_select($server): void {
       $data = fread($sock, 8192);
 
       if ('' === $data || false === $data) {
-        fclose($sock);
+        if (\is_resource($sock)) fclose($sock);
         unset($__clients[$id], $__buffers[$id], $__offsets[$id]);
         continue;
       }
@@ -218,7 +218,7 @@ function loop_select($server): void {
 
       if (\strlen($__buffers[$id]) > $max_header_size) {
         drop_connection($sock, 413);
-        fclose($sock);
+        if (\is_resource($sock)) fclose($sock);
         unset($__clients[$id], $__buffers[$id], $__offsets[$id]);
         continue;
       }
@@ -238,7 +238,7 @@ function loop_select($server): void {
 
         if (isset($req['__invalid'])) {
           drop_connection($sock, $req['__invalid']);
-          fclose($sock);
+          if (\is_resource($sock)) fclose($sock);
           unset($__clients[$id], $__buffers[$id], $__offsets[$id]);
           break;
         }
@@ -246,7 +246,7 @@ function loop_select($server): void {
         handle_req($sock, $req, ['timer' => null]);
 
         if (isset($req['r_close']) && $req['r_close']) {
-          fclose($sock);
+          if (\is_resource($sock)) fclose($sock);
           unset($__clients[$id], $__buffers[$id], $__offsets[$id]);
           break;
         }
@@ -469,7 +469,7 @@ function handle_req($sock, array $req, array $state): void {
 
   if ($close) {
     if (! empty($state['timer'])) $state['timer']->stop();
-    fclose($sock);
+    if (\is_resource($sock)) fclose($sock);
   }
 }
 
@@ -484,7 +484,7 @@ function drop_connection($sock, int $code): void {
   $out .= $body;
 
   fwrite($sock, $out);
-  fclose($sock);
+  if (\is_resource($sock)) fclose($sock);
 }
 
 function should_close(string $http, array $headers): bool {

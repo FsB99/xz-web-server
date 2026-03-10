@@ -74,18 +74,18 @@ function firewall_compile(array $rules): array{
 
 function firewall_get_var(array $req, string $var, string $key): array|string|null{
   return match ($var) {
-    'method' => $req['r_mtd'],
-    'uri' => $req['r_uri'],
-    'path' => $req['r_path'],
-    'body' => $req['r_body'],
+    'method' => $req['r_mtd'] ?? 'get',
+    'uri' => $req['r_uri'] ?? null,
+    'path' => $req['r_path'] ?? null,
+    'body' => $req['r_body'] ?? null,
     'header' => $req['r_head'][$key] ?? null,
     'header_name' => array_keys($req['r_head']) ?? null,
     'cookie' => $req['r_cookie'][$key] ?? null,
-    'cookie_name' => array_keys($req['r_cookie']) ?? null,
+    'cookie_name' => isset($req['r_cookie']) ? array_keys($req['r_cookie']) : null,
     'get' => $req['r_get'][$key] ?? null,
-    'get_name' => array_keys($req['r_get']) ?? null,
+    'get_name' => isset($req['r_get']) ? array_keys($req['r_get']) : null,
     'post' => $req['r_post'][$key] ?? null,
-    'get_name' => array_keys($req['r_post']) ?? null,
+    'get_name' => isset($req['r_post']) ? array_keys($req['r_get']) : null,
     default => null
   };
 }
@@ -215,12 +215,12 @@ function firewall_run(array $req): bool{
 
   if ($score >= $threshold) {
     // todo, maybe log this, but for now just print on CLI
-    $rs = [
-      'score' => $score,
-      'hits' => $hits,
-      'blocked' => $score >= $threshold
-    ];
-    print_r($rs);
+    // $rs = [
+    //   'score' => $score,
+    //   'hits' => $hits,
+    //   'blocked' => $score >= $threshold
+    // ];
+    // print_r($rs);
     $rt = true;
   }
   return $rt;
