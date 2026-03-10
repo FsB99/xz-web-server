@@ -1,4 +1,9 @@
 # Notes
+- 10-03-2026
+  - Fix some minor HTTP
+  - Adding OWASP CRS tests as pivot to see how good the implementation is (pilot)
+  - Adding partial implementaion of CRS.
+  - Fix CRS engine.
 - 09-03-2026
   - Changed into modules
   - Moved core from server.php to module/http.php
