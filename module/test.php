@@ -2,6 +2,8 @@
 // XZ Web Server by Fsb
 define('ABSPATH', __DIR__);
 
+include './firewall_cnf.php';
+
 test_waf_x();
 
 function test_waf_x() {
