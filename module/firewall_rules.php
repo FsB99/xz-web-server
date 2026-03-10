@@ -28,6 +28,7 @@ $r913 = include './module/firewall/913.php';
 $r920 = include './module/firewall/920.php';
 $r921 = include './module/firewall/921.php';
 $r930 = include './module/firewall/930.php';
-$crs_rules_raw = array_merge($r911, $r913, $r920, $r921, $r930);
+$r933 = include './module/firewall/933.php';
+$crs_rules_raw = array_merge($r911, $r913, $r920, $r921, $r930, $r933);
 
 $GLOBALS['crs_rules'] = $crs_rules_raw;
