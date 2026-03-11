@@ -12,7 +12,7 @@ return [
     'score' => 5,
     'msg' => 'Invalid HTTP Request Line',
     'rule' => [
-      ['w' => ['req_line'], 'rx' => '(?i)^(?:get /[^#\?]*(?:\?[^\s\x0b#]*)?(?:#[^\s\x0b]*)?|(?:connect (?:(?:[0-9]{1,3}\.){3}[0-9]{1,3}\.?(?::[0-9]+)?|[\--9A-Z_a-z]+:[0-9]+)|options \*|[a-z]{3,10}[\s\x0b]+(?:[0-9A-Z_a-z]{3,7}?://[\--9A-Z_a-z]*(?::[0-9]+)?)?/[^#\?]*(?:\?[^\s\x0b#]*)?(?:#[^\s\x0b]*)?)[\s\x0b]+[\.-9A-Z_a-z]+)$', 'not' => true],
+      ['w' => ['req_line'], 'rx' => '^(?i)(?:GET /[^#?]*(?:\?[^\s\x0b#]*)?(?:#[^\s\x0b]*)?|(?:CONNECT (?:[0-9]{1,3}\.){3}[0-9]{1,3}(?::[0-9]+)?|[A-Za-z0-9_\-]+:[0-9]+)|OPTIONS \*|[A-Za-z]{3,10}[\s\x0b]+(?:[0-9A-Za-z]{3,7}?://[A-Za-z0-9_\-]*(?::[0-9]+)?/[^#?]*(?:\?[^\s\x0b#]*)?(?:#[^\s\x0b]*)?)?[\s\x0b]+[A-Za-z0-9.\-]+))$', 'not' => true],
     ],
   ],
   [
@@ -207,7 +207,7 @@ return [
     'score' => 5,
     'msg' => 'Invalid Cache-Control request header',
     'rule' => [
-      ['w' => ['header'], 'wpr' => 'Cache-Control', 'rx' => '~^\s*(?:max-age=\d+|s-maxage=\d+|max-stale(?:=\d+)?|min-fresh=\d+|no-cache(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+"?)?|no-store|no-transform|only-if-cached|must-revalidate|proxy-revalidate|public|private(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+"?)?)(?:\s*,\s*(?:max-age=\d+|s-maxage=\d+|max-stale(?:=\d+)?|min-fresh=\d+|no-cache(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\"?)?|no-store|no-transform|only-if-cached|must-revalidate|proxy-revalidate|public|private(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+"?)?))*\s*$~i', 'not'=> true],
+      ['w' => ['header'], 'wpr' => 'Cache-Control', 'rx' => '^\s*(?:max-age=\d+|s-maxage=\d+|max-stale(?:=\d+)?|min-fresh=\d+|no-cache(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\"?)?|no-store|no-transform|only-if-cached|must-revalidate|proxy-revalidate|public|private(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\"?)?)(?:\s*,\s*(?:max-age=\d+|s-maxage=\d+|max-stale(?:=\d+)?|min-fresh=\d+|no-cache(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\"?)?|no-store|no-transform|only-if-cached|must-revalidate|proxy-revalidate|public|private(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\"?)?))*\s*$', 'not'=> true],
     ],
   ],
   [
@@ -219,7 +219,7 @@ return [
     'score' => 5,
     'msg' => 'Invalid character in request headers (outside of very strict set)',
     'rule' => [
-      ['w' => ['header'], 'wpr' => 'Accept-Encoding', 'rx' => '#^\s*(?:br|compress|deflate|(?:pack200-)?gzip|identity|\*|aes128gcm|exi|zstd|x-(?:compress|gzip))(?:\s*;\s*q=\d(?:\.\d{1,3})?)?(?:\s*,\s*(?:br|compress|deflate|(?:pack200-)?gzip|identity|\*|aes128gcm|exi|zstd|x-(?:compress|gzip))(?:\s*;\s*q=\d(?:\.\d{1,3})?)?)*\s*$#i', 'not' => true],
+      ['w' => ['header'], 'wpr' => 'Accept-Encoding', 'rx' => '#(?:br|compress|deflate|(?:pack200-)?gzip|identity|\*|aes128gcm|exi|zstd|x-(?:compress|gzip))#i', 'not' => true],
     ],
   ],
   [

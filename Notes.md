@@ -2,7 +2,7 @@
 - 11-03-2026
   - Change HTTP parser.
   - Adding static code analysis PHPStan(SAST).
-  - Change the implementation of CRS to reduce the performance degraded.
+  - Change the implementation of CRS to reduce the performance degraded (-14.4%).
   - Changes regex since many are broken with PHP.
   - Use multi process for faster tests.
   - From CRS regression tests, failed: 194 / 3.360.

@@ -2,6 +2,7 @@
 // XZ Web Server by Fsb
 if (! \defined('ABSPATH')) exit(0);
 
+include './module/firewall_cnf.php';
 $firewall_file = './module/firewall_rules.php';
 
 if (\is_file($firewall_file)) {
@@ -11,6 +12,7 @@ if (\is_file($firewall_file)) {
 }
 
 function firewall_compile(array $rules): array {
+  global $crs_ignored_ids;
   $rt = [];
 
   foreach ($rules as $r) {
@@ -20,6 +22,8 @@ function firewall_compile(array $rules): array {
       'score' => $r['score'] ?? 0,
       'conds' => []
     ];
+
+    if (in_array($r['id'], $crs_ignored_ids)) continue;
 
     foreach ($r['rule'] as $c) {
       $vars = (array) ($c['w'] ?? []);
@@ -49,7 +53,7 @@ function firewall_compile(array $rules): array {
 
       // keep regex as string only
       if ($cond['op'] === 'rx') {
-        if (@preg_match($cond['val'], '') === false) {
+        if (@preg_match($cond['val'], 'a') === false) {
           echo "Invalid regex: {$r['id']}" . PHP_EOL;
           continue;
         }
