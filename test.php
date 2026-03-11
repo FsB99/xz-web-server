@@ -11,7 +11,7 @@ if ('waf' === $copt_a) {
   test_waf_dev();
 
 } else {
-  passthru('php vendor/bin/phpstan analyse -c ps.neon --memory-limit=1G');
+  \passthru('php vendor/bin/phpstan analyse -c ps.neon --memory-limit=1G');
 }
 
 function test_waf_dev() {
@@ -29,7 +29,7 @@ function test_waf_dev() {
 
     foreach ($tests as $test) {
       $test_id = $test['test_id'] ?? 0;
-      $desc = substr(($test['desc'] ?? ''), 0, 40);
+      $desc = \substr(($test['desc'] ?? ''), 0, 40);
       $stages = $test['stages'] ?? [];
 
       foreach ($stages as $stage) {
@@ -109,7 +109,7 @@ function test_waf_dev() {
 }
 
 function test_waf_load_tests(): array|bool {
-  $dir = './module/firewall/test/';
+  $dir = './test/';
   $rt = [];
   if ($dh = \opendir($dir)){
     while (($file = \readdir($dh)) !== false){

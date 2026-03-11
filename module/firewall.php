@@ -23,16 +23,16 @@ function firewall_compile(array $rules): array {
       'conds' => []
     ];
 
-    if (in_array($r['id'], $crs_ignored_ids)) continue;
+    if (\in_array($r['id'], $crs_ignored_ids)) continue;
 
     foreach ($r['rule'] as $c) {
-      $vars = (array) ($c['w'] ?? []);
-      if (!$vars) continue;
+      $vars = (array)($c['w'] ?? []);
+      if (! $vars) continue;
 
       $cond = [
         'var' => $vars,
-        'key' => isset($c['wpr']) ? strtolower($c['wpr']) : '',
-        'op'  => 'default',
+        'key' => isset($c['wpr']) ? \strtolower($c['wpr']) : '',
+        'op' => 'default',
         'val' => null,
       ];
 
@@ -65,7 +65,7 @@ function firewall_compile(array $rules): array {
     // group by request key
     foreach ($cr['conds'] as $cond) {
       foreach ($cond['var'] as $v) {
-        $req_key = match(strtolower($v)) {
+        $req_key = match(\strtolower($v)) {
           'args','get','args_names' => 'r_get',
           'post' => 'r_post',
           'header','request_headers' => 'r_head',
@@ -134,13 +134,13 @@ function firewall_get_var(array $req, string $var, string $key): array|string|nu
 
       $arr = $req[$map[$var]] ?? [];
 
-      if ($key !== '' && isset($arr[$key])) {
-        if (str_ends_with($var,'_names')) return [$key];
-        return is_array($arr[$key]) ? $arr[$key] : [$arr[$key]];
+      if ('' !== $key && isset($arr[$key])) {
+        if (\str_ends_with($var,'_names')) return [$key];
+        return \is_array($arr[$key]) ? $arr[$key] : [$arr[$key]];
       }
 
-      if (str_ends_with($var,'_names')) return array_keys($arr);
-      return array_values($arr);
+      if (\str_ends_with($var,'_names')) return \array_keys($arr);
+      return \array_values($arr);
   }
 
   return null;
@@ -149,11 +149,11 @@ function firewall_get_var(array $req, string $var, string $key): array|string|nu
 function firewall_match_cond(array $cond, array $req): bool {
   foreach ($cond['var'] as $var) {
     $values = firewall_get_var($req, $var, $cond['key']);
-    if ($values === null) continue;
-    if (!is_array($values)) $values = [$values];
+    if (\is_null($values)) continue;
+    if (! \is_array($values)) $values = [$values];
 
     foreach ($values as $v) {
-      if ($v === null) continue;
+      if (\is_null($v)) continue;
 
       $ok = false;
       switch ($cond['op']) {
@@ -173,16 +173,16 @@ function firewall_match_cond(array $cond, array $req): bool {
           $ok = $v > $cond['val'];
           break;
         case 'in':
-          $ok = isset($cond['val'][strtoupper((string)$v)]);
+          $ok = isset($cond['val'][\strtoupper((string)$v)]);
           break;
         case 'range':
           $ok = $v >= $cond['val'][0] && $v <= $cond['val'][1];
           break;
         case 'maxl':
-          $ok = strlen($v) <= $cond['val'];
+          $ok = \strlen($v) <= $cond['val'];
           break;
         case 'contains':
-          $ok = str_contains((string)$v, $cond['val']);
+          $ok = \str_contains((string)$v, $cond['val']);
           break;
         case 'rx':
           $ok = preg_match($cond['val'], $v) === 1;
@@ -209,7 +209,7 @@ function firewall_run(array $req, int $threshold = 5): bool {
 
   foreach ($CRS as $req_key => $rules) {
     foreach ($rules as $rule) {
-      if (!isset($rule['conds']) || ! \is_array($rule['conds'])) continue;
+      if (! isset($rule['conds']) || ! \is_array($rule['conds'])) continue;
       $matched = true;
       
       foreach ($rule['conds'] as $cond) {
@@ -245,7 +245,7 @@ function firewall_readfile(string $file): array {
   $rt = [];
 
   if (\is_file($file)) {
-    $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    $lines = @file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
     foreach ($lines as $line) {
       $line = \trim($line);

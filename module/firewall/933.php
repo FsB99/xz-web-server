@@ -3,16 +3,16 @@
 if (! \defined('ABSPATH')) exit(0);
 
 $php_variables = firewall_readfile('./module/firewall/php_variables.data');
-$rx_933130 = '~(?:' . implode('|', array_map(
+$rx_933130 = '~(?:'.\implode('|', array_map(
   fn($v) => preg_quote($v, '~'),
   $php_variables
-)) . ')~i';
+)).')~i';
 
 $php_function_names_933150 = firewall_readfile('./module/firewall/php_function_names_933150.data');
-$rx_933150 = '~(?:' . implode('|', array_map(
+$rx_933150 = '~(?:'.\implode('|', array_map(
   fn($v) => preg_quote($v, '~'),
   $php_function_names_933150
-)) . ')~i';
+)).')~i';
 
 return [
   [
@@ -24,7 +24,7 @@ return [
     'score' => 5,
     'msg' => 'PHP Injection Attack: PHP Open Tag Found',
     'rule' => [
-      ['w' => ['cookie', 'get'], 'rx' => '~(?i)<\?(?:php[\s\x0b]|[\s\x0b=]|xml(?:[\s\x0b]+[^a-z]|:)|$)|\[[/\x5c]?php\]|\{/?php\}~'],
+      ['w' => ['cookie', 'args'], 'rx' => '~(?i)<\?(?:php[\s\x0b]|[\s\x0b=]|xml(?:[\s\x0b]+[^a-z]|:)|$)|\[[/\x5c]?php\]|\{/?php\}~'],
     ],
   ],
   [
@@ -132,7 +132,7 @@ return [
     'score' => 5,
     'msg' => 'PHP Injection Attack: Serialized Object Injection',
     'rule' => [
-      ['w' => ['cookie', 'header', 'get'], 'rx' => '~[oOcC]:\d+:".+?":\d+:\{.*}~'],
+      ['w' => ['cookie', 'header', 'args'], 'rx' => '~[oOcC]:\d+:".+?":\d+:\{.*}~'],
     ],
   ],
   [

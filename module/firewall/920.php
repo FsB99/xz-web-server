@@ -246,16 +246,16 @@ return [
       ['w' => ['header'], 'wpr' => 'Sec-CH-UA-Mobile', 'rx' => '~^(?:\?[01])?$~', 'not' => true],
     ],
   ],
-  // [
-  //   'id' => 920460, // todo
-  //   'phase' => 2,
-  //   'pl' => 4,
-  //   'atk_cat' => ['protocol'],
-  //   'capec' => [1000, 153, 267],
-  //   'score' => 5,
-  //   'msg' => 'Abnormal character escapes in request',
-  //   'rule' => [
-  //     ['w' => ['uri', 'header'], 'rx' => '~(?:^|[^\x5c])\x5c[cdeghijklmpqwxyz123456789]~'],
-  //   ],
-  // ],
+  [
+    'id' => 920460, // todo
+    'phase' => 2,
+    'pl' => 4,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 153, 267],
+    'score' => 5,
+    'msg' => 'Abnormal character escapes in request',
+    'rule' => [
+      ['w' => ['uri', 'header'], 'rx' => '~(?:^|[^\x5c])\x5c[cdeghijklmpqwxyz123456789]~'],
+    ],
+  ],
 ];

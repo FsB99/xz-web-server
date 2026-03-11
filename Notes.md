@@ -6,6 +6,7 @@
   - Changes regex since many are broken with PHP.
   - Use multi process for faster tests.
   - From CRS regression tests, failed: 194 / 3.360.
+  - Adding ASCII table.
 
 - 10-03-2026
   - Fix some minor HTTP

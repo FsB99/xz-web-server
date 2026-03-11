@@ -12,7 +12,7 @@ return [
     'score' => 5,
     'msg' => 'HTTP Request Smuggling Attack',
     'rule' => [
-      ['w' => ['uri', 'body', 'get'], 'rx' => '~\b(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|CONNECT|TRACE|COPY|MOVE|LOCK|UNLOCK|PROPFIND|PROPPATCH|MKCOL)\s+.+?\s+HTTP/[0-9](?:\.[0-9])?~i'],
+      ['w' => ['uri', 'body', 'args'], 'rx' => '~\b(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|CONNECT|TRACE|COPY|MOVE|LOCK|UNLOCK|PROPFIND|PROPPATCH|MKCOL)\s+.+?\s+HTTP/[0-9](?:\.[0-9])?~i'],
     ],
   ],
   [
@@ -24,7 +24,7 @@ return [
     'score' => 5,
     'msg' => 'HTTP Response Splitting Attack',
     'rule' => [
-      ['w' => ['cookie', 'get'], 'rx' => '~[\n\r][^0-9A-Z_a-z]*?(?:content-(?:type|length)|set-cookie|location):[\s\x0b]*[0-9A-Z_a-z]~'],
+      ['w' => ['cookie', 'args'], 'rx' => '~[\n\r][^0-9A-Z_a-z]*?(?:content-(?:type|length)|set-cookie|location):[\s\x0b]*[0-9A-Z_a-z]~'],
     ],
   ],
   [
@@ -36,7 +36,7 @@ return [
     'score' => 5,
     'msg' => 'HTTP Response Splitting Attack',
     'rule' => [
-      ['w' => ['cookie', 'get'], 'rx' => '~(?:http/\d+(?:\.\d+)?\b|<(?:html|meta)\b)~i'],
+      ['w' => ['cookie', 'args'], 'rx' => '~(?:http/\d+(?:\.\d+)?\b|<(?:html|meta)\b)~i'],
     ],
   ],
   [
@@ -60,7 +60,7 @@ return [
     'score' => 5,
     'msg' => 'HTTP Header Injection Attack via payload (CR/LF detected)',
     'rule' => [
-      ['w' => ['get_name'], 'rx' => '~[\r\n\x0b\x0c]~'],
+      ['w' => ['args_name'], 'rx' => '~[\r\n\x0b\x0c]~'],
     ],
   ],
   [
@@ -72,7 +72,7 @@ return [
     'score' => 5,
     'msg' => 'HTTP Header Injection Attack via payload (CR/LF and header-name detected)',
     'rule' => [
-      ['w' => ['get'], 'rx' => '~[\n\r]+(?:[\s\x0b]|location|re(?:fresh|mote-(?:ip|addr))|(?:set-)?cookie|forwarded-(?:(?:fo|serve)r|host)|host|via|originating-IP|x-(?:forwarded-(?:(?:fo|serve)r|host)|host|via|remote-(?:ip|addr)|originating-IP))[\s\x0b]*:~'],
+      ['w' => ['args'], 'rx' => '~[\n\r]+(?:[\s\x0b]|location|re(?:fresh|mote-(?:ip|addr))|(?:set-)?cookie|forwarded-(?:(?:fo|serve)r|host)|host|via|originating-IP|x-(?:forwarded-(?:(?:fo|serve)r|host)|host|via|remote-(?:ip|addr)|originating-IP))[\s\x0b]*:~'],
     ],
   ],
   [
@@ -132,7 +132,7 @@ return [
     'score' => 5,
     'msg' => 'HTTP Header Injection Attack via payload (CR/LF detected)',
     'rule' => [
-      ['w' => ['get'], 'rx' => '~[\r\n\x0b\x0c]~'],
+      ['w' => ['args'], 'rx' => '~[\r\n\x0b\x0c]~'],
     ],
   ],
   [
@@ -168,7 +168,7 @@ return [
     'score' => 5,
     'msg' => 'HTTP Parameter Pollution after detecting bogus char after parameter array',
     'rule' => [
-      ['w' => ['get_name'], 'rx' => '~(][^\]]+$|][^\]]+\[)~'],
+      ['w' => ['args_name'], 'rx' => '~(][^\]]+$|][^\]]+\[)~'],
     ],
   ],
   [
@@ -180,7 +180,7 @@ return [
     'score' => 5,
     'msg' => 'HTTP Parameter Pollution possible via array notation',
     'rule' => [
-      ['w' => ['get_name'], 'rx' => '~\[~'],
+      ['w' => ['args_name'], 'rx' => '~\[~'],
     ],
   ],
 ];

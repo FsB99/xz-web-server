@@ -3,16 +3,16 @@
 if (! \defined('ABSPATH')) exit(0);
 
 $ssrf = firewall_readfile('./module/firewall/ssrf.data');
-$rx_934110 = '~(?:' . implode('|', array_map(
+$rx_934110 = '~(?:'.\implode('|', array_map(
   fn($v) => preg_quote($v, '~'),
   $ssrf
-)) . ')~i';
+)).')~i';
 
 $ssrf_no_scheme = firewall_readfile('./module/firewall/ssrf_no_scheme.data');
-$rx_934190 = '~(?:' . implode('|', array_map(
+$rx_934190 = '~(?:'.\implode('|', array_map(
   fn($v) => preg_quote($v, '~'),
   $ssrf_no_scheme
-)) . ')~i';
+)).')~i';
 
 return [
   [
