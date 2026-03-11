@@ -24,3 +24,13 @@ php server.php
 
 # NOTES
 [Developer Notes Link](https://github.com/FsB99/xz-web-server/blob/main/Notes.md)
+
+# Testing
+
+``` console
+// for SAST
+php test.php
+
+// for WAF
+php test.php -a waf
+```
