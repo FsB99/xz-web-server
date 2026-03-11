@@ -15,7 +15,9 @@ $r931 = include './module/firewall/931.php';
 $r933 = include './module/firewall/933.php';
 $r934 = include './module/firewall/934.php';
 $r941 = include './module/firewall/941.php';
-$crs_rules_raw = \array_merge($r911, $r913, $r920, $r921, $r930, $r931, $r933, $r934, $r941);
+$r942 = include './module/firewall/942.php';
+$r943 = include './module/firewall/943.php';
+$crs_rules_raw = \array_merge($r911, $r913, $r920, $r921, $r930, $r931, $r933, $r934, $r941, $r942, $r943);
 
 $GLOBALS['crs_rules'] = $crs_rules_raw;
 unset($crs_rules_raw, $r911, $r913, $r920, $r921, $r930, $r931, $r933, $r934, $r941);
