@@ -12,7 +12,7 @@ return [
     'score' => 5,
     'msg' => 'Method is not allowed by policy',
     'rule' => [
-      ['w' => ['method'], 'in' => ['GET', 'HEAD', 'POST'], 'not' => true],
+      ['w' => ['method'], 'in' => ['get', 'head', 'post'], 'not' => true],
     ],
   ],
 ];

@@ -4,6 +4,42 @@ if (! \defined('ABSPATH')) exit(0);
 
 return [
   [
+    'id' => 920100,
+    'phase' => 1,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272],
+    'score' => 5,
+    'msg' => 'Invalid HTTP Request Line',
+    'rule' => [
+      ['w' => ['req_line'], 'rx' => '(?i)^(?:get /[^#\?]*(?:\?[^\s\x0b#]*)?(?:#[^\s\x0b]*)?|(?:connect (?:(?:[0-9]{1,3}\.){3}[0-9]{1,3}\.?(?::[0-9]+)?|[\--9A-Z_a-z]+:[0-9]+)|options \*|[a-z]{3,10}[\s\x0b]+(?:[0-9A-Z_a-z]{3,7}?://[\--9A-Z_a-z]*(?::[0-9]+)?)?/[^#\?]*(?:\?[^\s\x0b#]*)?(?:#[^\s\x0b]*)?)[\s\x0b]+[\.-9A-Z_a-z]+)$', 'not' => true],
+    ],
+  ],
+  [
+    'id' => 920120,
+    'phase' => 2,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272],
+    'score' => 5,
+    'msg' => 'Attempted multipart/form-data bypass',
+    'rule' => [
+      ['w' => ['files', 'files_names'], 'rx' => '~(?i)^(?:&(?:(?:[acegilnorsuz]acut|[aeiou]grav|[aino]tild)e|[c-elnr-tz]caron|(?:[cgklnr-t]cedi|[aeiouy]um)l|[aceg-josuwy]circ|[au]ring|a(?:mp|pos)|nbsp|oslash);|[^"\';=\x5c])*$~', 'not' => true],
+    ],
+  ],
+  [
+    'id' => 920160,
+    'phase' => 1,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272],
+    'score' => 5,
+    'msg' => 'Content-Length HTTP header is not numeric',
+    'rule' => [
+      ['w' => ['header'], 'wpr' => 'Content-Length', 'rx' => '~^\d+$~', 'not' => true],
+    ],
+  ],
+  [
     'id' => 920170,
     'phase' => 1,
     'pl' => 1,
@@ -13,7 +49,20 @@ return [
     'msg' => 'GET or HEAD Request with Body Content',
     'rule' => [
       ['w' => ['method'], 'in' => ['GET', 'HEAD']],
-      ['w' => 'header', 'wpr' => 'Content-Length', 'eq' => '0'],
+      ['w' => ['header'], 'wpr' => 'Content-Length', 'not' => true, 'rx' => '~^[0-9]+$~'],
+    ],
+  ],
+  [
+    'id' => 920171,
+    'phase' => 1,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272],
+    'score' => 5,
+    'msg' => 'GET or HEAD Request with Transfer-Encoding',
+    'rule' => [
+      ['w' => ['method'], 'in' => ['GET', 'HEAD']],
+      ['w' => ['header'], 'wpr' => 'Transfer-Encoding', 'not' => true, 'rx' => '~^[0-9]+$~'],
     ],
   ],
   [
@@ -26,7 +75,19 @@ return [
     'msg' => 'Content-Length and Transfer-Encoding headers present',
     'rule' => [
       ['w' => ['header'], 'wpr' => 'Transfer-Encoding', 'eq' => '0'],
-      ['w' => ['header'], 'wpr' => 'Content-Length', 'not_eq' => '0'],
+      ['w' => ['header'], 'wpr' => 'Content-Length', 'eq' => '0'],
+    ],
+  ],
+  [
+    'id' => 920190,
+    'phase' => 1,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272],
+    'score' => 4,
+    'msg' => 'Obsolete Request-Range header detected',
+    'rule' => [
+      ['w' => ['header'], 'wpr' => 'Request-Range', 'gt' => 0],
     ],
   ],
   [
@@ -50,7 +111,19 @@ return [
     'score' => 4,
     'msg' => 'Multiple/Conflicting Connection Header Data Found',
     'rule' => [
-      ['w' => ['header'], 'wpr' => 'Connection', 'rx' => '~\b(?:keep-alive|close),\s?(?:keep-alive|close)\b~'],
+      ['w' => ['header'], 'wpr' => 'Connection', 'rx' => '~\b([a-z\-]+)\b\s*,\s*\1\b~i'],
+    ],
+  ],
+  [
+    'id' => 920250,
+    'phase' => 1,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272],
+    'score' => 4,
+    'msg' => 'UTF8 Encoding Abuse Attack Attempt',
+    'rule' => [
+      ['w' => ['args', 'args_names', 'path'], 'utf' => true],
     ],
   ],
   [
@@ -74,21 +147,45 @@ return [
     'score' => 5,
     'msg' => 'Invalid character in request (null character)',
      'rule' => [
-      ['w' => ['uri'], 'wpr' => '', 'maxl' => 255], // todo, maybe need 1-255
+      ['w' => ['uri', 'header', 'args', 'args_names'], 'byte_range' => [1,255]],
     ],
   ],
   [
-    'id' => 920320,
+    'id' => 920280,
     'phase' => 1,
-    'pl' => 2,
+    'pl' => 1,
     'atk_cat' => ['protocol'],
     'capec' => [1000, 210, 272],
-    'score' => 2,
-    'msg' => 'Missing User Agent Header',
-    'rule' => [
-      ['w' => ['header'], 'wpr' => 'User-Agent', 'in' => ['']],
+    'score' => 5,
+    'msg' => 'Request Missing a Host Header',
+     'rule' => [
+      ['w' => ['header'], 'wpr' => 'Host', 'eq' => '0'],
     ],
   ],
+  [
+    'id' => 920290,
+    'phase' => 1,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272],
+    'score' => 5,
+    'msg' => 'Request Missing a Host Header',
+     'rule' => [
+      ['w' => ['header'], 'wpr' => 'Host', 'rx' => '~^$~'],
+    ],
+  ],
+  // [
+  //   'id' => 920320, // todo
+  //   'phase' => 1,
+  //   'pl' => 2,
+  //   'atk_cat' => ['protocol'],
+  //   'capec' => [1000, 210, 272],
+  //   'score' => 2,
+  //   'msg' => 'Missing User Agent Header',
+  //   'rule' => [
+  //     ['w' => ['header'], 'wpr' => 'User-Agent', 'in' => ['', null]],
+  //   ],
+  // ],
   [
     'id' => 920121,
     'phase' => 2,
@@ -98,7 +195,7 @@ return [
     'score' => 5,
     'msg' => 'Attempted multipart/form-data bypass',
     'rule' => [
-      ['w' => ['files', 'files_name'], 'rx' => "~['\";=\x5c]~"],
+      ['w' => ['files'], 'rx' => '~[\'";=\x5c]~'],
     ],
   ],
   [
@@ -110,7 +207,7 @@ return [
     'score' => 5,
     'msg' => 'Invalid Cache-Control request header',
     'rule' => [
-      ['w' => ['header'], 'wpr' => 'Cache-Control', 'rx' => "~^(?:(?:max-age=[0-9]+|min-fresh=[0-9]+|no-cache|no-store|no-transform|only-if-cached|max-stale(?:=[0-9]+)?)(?:\s*\,\s*|$)){1,7}$~", 'not' => true],
+      ['w' => ['header'], 'wpr' => 'Cache-Control', 'rx' => '~^\s*(?:max-age=\d+|s-maxage=\d+|max-stale(?:=\d+)?|min-fresh=\d+|no-cache(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+"?)?|no-store|no-transform|only-if-cached|must-revalidate|proxy-revalidate|public|private(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+"?)?)(?:\s*,\s*(?:max-age=\d+|s-maxage=\d+|max-stale(?:=\d+)?|min-fresh=\d+|no-cache(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\"?)?|no-store|no-transform|only-if-cached|must-revalidate|proxy-revalidate|public|private(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+"?)?))*\s*$~i', 'not'=> true],
     ],
   ],
   [
@@ -122,7 +219,19 @@ return [
     'score' => 5,
     'msg' => 'Invalid character in request headers (outside of very strict set)',
     'rule' => [
-      ['w' => ['header'], 'wpr' => 'Accept-Encoding', 'rx' => "~br|compress|deflate|(?:pack200-)?gzip|identity|\*|^$|aes128gcm|exi|zstd|x-(?:compress|gzip)~", 'not' => true],
+      ['w' => ['header'], 'wpr' => 'Accept-Encoding', 'rx' => '#^\s*(?:br|compress|deflate|(?:pack200-)?gzip|identity|\*|aes128gcm|exi|zstd|x-(?:compress|gzip))(?:\s*;\s*q=\d(?:\.\d{1,3})?)?(?:\s*,\s*(?:br|compress|deflate|(?:pack200-)?gzip|identity|\*|aes128gcm|exi|zstd|x-(?:compress|gzip))(?:\s*;\s*q=\d(?:\.\d{1,3})?)?)*\s*$#i', 'not' => true],
+    ],
+  ],
+  [
+    'id' => 920275, // todo
+    'phase' => 1,
+    'pl' => 4,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 255, 153],
+    'score' => 5,
+    'msg' => 'Invalid character in request headers (outside of very strict set)',
+    'rule' => [
+      ['w' => ['header'], 'wpr' => 'Sec-Fetch-User', 'rx' => '~^(?:\?[01])?$~', 'not' => true],
     ],
   ],
   [
@@ -134,31 +243,19 @@ return [
     'score' => 5,
     'msg' => 'Invalid character in request headers (outside of very strict set)',
     'rule' => [
-      ['w' => ['header'], 'wpr' => 'Sec-Fetch-User', 'rx' => "~^(?:\?[01])?$~", 'not' => true],
+      ['w' => ['header'], 'wpr' => 'Sec-CH-UA-Mobile', 'rx' => '~^(?:\?[01])?$~', 'not' => true],
     ],
   ],
-  [
-    'id' => 920275,
-    'phase' => 1,
-    'pl' => 4,
-    'atk_cat' => ['protocol'],
-    'capec' => [1000, 255, 153],
-    'score' => 5,
-    'msg' => 'Invalid character in request headers (outside of very strict set)',
-    'rule' => [
-      ['w' => ['header'], 'wpr' => 'Sec-CH-UA-Mobile', 'rx' => "~^(?:\?[01])?$~", 'not' => true],
-    ],
-  ],
-  [
-    'id' => 920460,
-    'phase' => 2,
-    'pl' => 4,
-    'atk_cat' => ['protocol'],
-    'capec' => [1000, 153, 267],
-    'score' => 5,
-    'msg' => 'Abnormal character escapes in request',
-    'rule' => [
-      ['w' => ['uri', 'header'], 'rx' => '~(?:^|[^\x5c])\x5c[cdeghijklmpqwxyz123456789]~'],
-    ],
-  ],
+  // [
+  //   'id' => 920460, // todo
+  //   'phase' => 2,
+  //   'pl' => 4,
+  //   'atk_cat' => ['protocol'],
+  //   'capec' => [1000, 153, 267],
+  //   'score' => 5,
+  //   'msg' => 'Abnormal character escapes in request',
+  //   'rule' => [
+  //     ['w' => ['uri', 'header'], 'rx' => '~(?:^|[^\x5c])\x5c[cdeghijklmpqwxyz123456789]~'],
+  //   ],
+  // ],
 ];

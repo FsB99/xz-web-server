@@ -12,7 +12,7 @@ return [
     'score' => 5,
     'msg' => 'HTTP Request Smuggling Attack',
     'rule' => [
-      ['w' => ['body', 'get'], 'rx' => '~(?:get|p(?:(?:os|u)t|atch|rop(?:find|atch))|head|options|co(?:nnect|py)|delete|trac[ek]|m(?:kcol|ove)|(?:un)?lock)[\s\x0b]+[^\s\x0b]+[\s\x0b]+http/[0-9]~'],
+      ['w' => ['uri', 'body', 'get'], 'rx' => '~\b(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|CONNECT|TRACE|COPY|MOVE|LOCK|UNLOCK|PROPFIND|PROPPATCH|MKCOL)\s+.+?\s+HTTP/[0-9](?:\.[0-9])?~i'],
     ],
   ],
   [
@@ -36,7 +36,7 @@ return [
     'score' => 5,
     'msg' => 'HTTP Response Splitting Attack',
     'rule' => [
-      ['w' => ['cookie', 'get'], 'rx' => '~(?:\bhttp/\d|<(?:html|meta)\b)~'],
+      ['w' => ['cookie', 'get'], 'rx' => '~(?:http/\d+(?:\.\d+)?\b|<(?:html|meta)\b)~i'],
     ],
   ],
   [
@@ -60,7 +60,7 @@ return [
     'score' => 5,
     'msg' => 'HTTP Header Injection Attack via payload (CR/LF detected)',
     'rule' => [
-      ['w' => ['get_name'], 'rx' => '~[\n\r]~'],
+      ['w' => ['get_name'], 'rx' => '~[\r\n\x0b\x0c]~'],
     ],
   ],
   [
@@ -96,7 +96,7 @@ return [
     'score' => 5,
     'msg' => 'LDAP Injection Attack',
     'rule' => [
-      ['w' => ['files_name'], 'rx' => '~^[^!&\(\):<>\|~]*\)[\s\x0b]*(?:\((?:[^!&\(\),<->\|~]+[<>~]?=|[\s\x0b]*[!&\|][\s\x0b]*[\(\)]?[\s\x0b]*)|\)[\s\x0b]*\([\s\x0b]*[!&\|][\s\x0b]*|[!&\|][\s\x0b]*\([^!&\(\),<->\|~]+[<>~]?=[^!&\(\):<>\|~]*)~'],
+      ['w' => ['files_name'], 'rx' => '~^[^!&\(\):<>\|~]*\)[\s\x0b]*(?:\((?:[^!&\(\),<>\|~\-]+[<>~]?=|[\s\x0b]*[!&\|][\s\x0b]*[\(\)]?[\s\x0b]*)|\)[\s\x0b]*\([\s\x0b]*[!&\|][\s\x0b]*|[!&\|][\s\x0b]*\([^!&\(\),<>\|~\-]+[<>~]?=[^!&\(\):<>\|~]*)~'],
     ],
   ],
   [
@@ -120,7 +120,7 @@ return [
     'score' => 5,
     'msg' => 'mod_proxy attack attempt detected',
     'rule' => [
-      ['w' => ['uri'], 'rx' => '~unix:[^|]*\|~'],
+      ['w' => ['uri'], 'rx' => '~unix:[^|]+\|~i'],
     ],
   ],
   [
@@ -132,7 +132,7 @@ return [
     'score' => 5,
     'msg' => 'HTTP Header Injection Attack via payload (CR/LF detected)',
     'rule' => [
-      ['w' => ['get'], 'rx' => '~[\n\r]~'],
+      ['w' => ['get'], 'rx' => '~[\r\n\x0b\x0c]~'],
     ],
   ],
   [
@@ -147,18 +147,18 @@ return [
       ['w' => ['header'], 'wpr' => 'Content-Type', 'rx' => '~^[^\s\x0b,;]+[\s\x0b,;].*?\b(?:((?:tex|multipar)t|application)|((?:audi|vide)o|image|cs[sv]|(?:vn|relate)d|p(?:df|lain)|json|(?:soa|cs)p|x(?:ml|-www-form-urlencoded)|form-data|x-amf|(?:octe|repor)t|stream)|([\+/]))\b~'],
     ],
   ],
-  // [
-  //   'id' => 921230,
-  //   'phase' => 1,
-  //   'pl' => 3,
-  //   'atk_cat' => ['protocol'],
-  //   'capec' => [1000, 210, 272, 220],
-  //   'score' => 5,
-  //   'msg' => 'HTTP Range Header detected',
-  //   'rule' => [
-  //     ['w' => ['header'], 'wpr' => 'Range', 'gt' => '0'],
-  //   ],
-  // ],
+  [
+    'id' => 921230,
+    'phase' => 1,
+    'pl' => 3,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272, 220],
+    'score' => 5,
+    'msg' => 'HTTP Range Header detected',
+    'rule' => [
+      ['w' => ['header'], 'wpr' => 'Range', 'gt' => 0],
+    ],
+  ],
   [
     'id' => 921210,
     'phase' => 2,

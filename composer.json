@@ -1,0 +1,17 @@
+{
+    "name": "administrator/fast_svr",
+    "autoload": {
+        "psr-4": {
+            "Administrator\\FastSvr\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "fsb",
+            "email": "fajarbun@gmail.com"
+        }
+    ],
+    "require-dev": {
+        "phpstan/phpstan": "^2.1"
+    }
+}

@@ -184,7 +184,7 @@ function loop_select($server): void {
     }
   }
 
-  while (true) {
+  while (true) { //@phpstan-ignore-line
     $read = [$server];
     foreach ($__clients as $c) $read[] = $c;
     $write = $except = [];
@@ -267,146 +267,154 @@ function parse_request(string &$buffer, int &$offset): ?array {
   $len = \strlen($buffer);
   $headers = $cookies = $get = $post = $files = [];
   $header_end = \strpos($buffer, "\r\n\r\n", $offset);
+  $offset = 0;
 
-  if (false === $header_end) {
+  if ($header_end === false) {
     if ($len > $max_header_size) return ['__invalid' => 413];
-    return null;
+    return null; // incomplete headers
   }
 
   $header_end += 4;
-
   if ($header_end > $max_header_size) return ['__invalid' => 413];
 
   // request line
   $line_end = \strpos($buffer, "\r\n", $offset);
-  if (false === $line_end) return ['__invalid' => 400];
+  if ($line_end === false) return ['__invalid' => 400];
 
   $sp1 = \strpos($buffer, ' ', $offset);
-  if (false === $sp1) return ['__invalid' => 400];
-
   $sp2 = \strpos($buffer, ' ', $sp1 + 1);
-  if (false === $sp2 || $sp2 > $line_end) return ['__invalid' => 400];
+  if ($sp1 === false || $sp2 === false || $sp2 > $line_end) return ['__invalid' => 400];
 
-  $method = \strtolower(\substr($buffer, $offset, $sp1 - $offset));
-  if (! \in_array($method, ['get', 'post', 'head'], true)) return ['__invalid' => 405];
+  $method = \strtoupper(\substr($buffer, $offset, $sp1 - $offset));
+  $allowed_methods = ['GET','HEAD','POST','PUT','DELETE','CONNECT','OPTIONS','TRACE'];
+  if (! in_array($method, $allowed_methods, true)) return ['__invalid' => 405];
 
   $uri = \substr($buffer, $sp1 + 1, $sp2 - $sp1 - 1);
   if (\strlen($uri) > $max_uri_length || \str_contains($uri, "\0")) return ['__invalid' => 414];
 
   $http = \substr($buffer, $sp2 + 1, $line_end - $sp2 - 1);
-  if (! \in_array($http, ['HTTP/1.1', 'HTTP/1.0'], true)) return ['__invalid' => 400];
+  if (! in_array($http, ['HTTP/1.1','HTTP/1.0'], true)) return ['__invalid' => 400];
 
   $qpos = \strpos($uri, '?');
-  $path = (false === $qpos) ? $uri : \substr($uri, 0, $qpos);
-  $query_str = (false === $qpos) ? '' : \substr($uri, $qpos + 1);
+  $path = ($qpos === false) ? $uri : \substr($uri, 0, $qpos);
+  $query_str = ($qpos === false) ? '' : \substr($uri, $qpos + 1);
+
   $content_length = 0;
   $content_length_seen = $transfer_encoding_seen = false;
   $h_start = $line_end + 2;
 
+  // parse headers
   while ($h_start < $header_end - 2) {
-    $h_end = \strpos($buffer, "\r\n", $h_start);
-    if (false === $h_end) break;
+    $h_end = strpos($buffer, "\r\n", $h_start);
+    if ($h_end === false) break;
 
-    $colon = \strpos($buffer, ':', $h_start);
-    
-    if (false !== $colon && $colon < $h_end) {
-      $raw_key = \substr($buffer, $h_start, $colon - $h_start);
-      $key = \strtolower(\trim($raw_key));
-      $val = \trim(\substr($buffer, $colon + 1, $h_end - $colon - 1));
+    $colon = strpos($buffer, ':', $h_start);
+    if ($colon !== false && $colon < $h_end) {
+      $key = strtolower(trim(substr($buffer, $h_start, $colon - $h_start)));
+      $val = trim(substr($buffer, $colon + 1, $h_end - $colon - 1));
 
-      if (!\preg_match('#^[a-z0-9\-]+$#', $key)) return ['__invalid' => 400];
-      if (\str_contains($val, "\r") || \str_contains($val, "\n")) return ['__invalid' => 400];
+      if (!preg_match('#^[a-z0-9\-]+$#', $key)) return ['__invalid' => 400];
+      if (str_contains($val, "\r") || str_contains($val, "\n")) return ['__invalid' => 400];
+
       $headers[$key] = $val;
-      if ('transfer-encoding' === $key) $transfer_encoding_seen = true;
+
+      if ($key === 'transfer-encoding') $transfer_encoding_seen = true;
       if ($key === 'content-length') {
-        if (!\ctype_digit($val)) return ['__invalid' => 400];
-
-        if ($content_length_seen) {
-          if ((int)$val !== $content_length) return ['__invalid' => 400];
-
-          return ['__invalid' => 400];
-        }
-
+        if (!ctype_digit($val)) return ['__invalid' => 400];
+        if ($content_length_seen && (int)$val !== $content_length) return ['__invalid' => 400];
         $content_length_seen = true;
         $content_length = (int)$val;
-
         if ($content_length < 0 || $content_length > $max_body_size) return ['__invalid' => 413];
       }
 
-      if ('cookie' === $key) parse_kv(\str_replace('; ', '&', $val), $cookies);
+      if ($key === 'cookie') parse_kv(str_replace('; ','&',$val), $cookies);
     }
 
     $h_start = $h_end + 2;
   }
 
-  if ($transfer_encoding_seen) return ['__invalid' => 501];
-  if ($transfer_encoding_seen && $content_length_seen) return ['__invalid' => 400];
-  if ('HTTP/1.1' === $http && ! isset($headers['host'])) return ['__invalid' => 400];
-  if (isset($headers['transfer-encoding'])) return ['__invalid' => 501];
+  if ($transfer_encoding_seen) return ['__invalid' => 501]; // chunked not supported
+  if ($http === 'HTTP/1.1' && !isset($headers['host'])) return ['__invalid' => 400];
 
   $total = $header_end + $content_length;
-  if ($len < $total) return null;
+  if ($len < $total) return null; // body not fully received yet
 
-  $body = $content_length > 0 ? \substr($buffer, $header_end, $content_length) : '';
+  $body = $content_length > 0 ? substr($buffer, $header_end, $content_length) : '';
 
-  if ('' !== $query_str) parse_kv($query_str, $get);
-  if ('post' === $method && $content_length > 0) {
-    if (isset($headers['content-type']) && \str_contains($headers['content-type'], 'application/x-www-form-urlencoded')) parse_kv($body, $post);
+  // parse GET query
+  if ($query_str !== '') parse_kv($query_str, $get);
+
+  // parse POST body
+  if ($method === 'POST' && $content_length > 0 && isset($headers['content-type'])) {
+    $ctype = \strtolower($headers['content-type']);
+    if (\str_contains($ctype, 'application/x-www-form-urlencoded')) {
+      parse_kv($body, $post);
+    } elseif (\str_contains($ctype, 'multipart/form-data')) {
+      parse_multipart($body, $ctype, $post, $files);
+    }
   }
 
   $buffer = \substr($buffer, $total);
-  $offset = 0;
-
-  $rt = [
+  return [
     'r_ver' => $http,
     'r_head' => $headers,
     'r_ip' => null,
     'r_cookie' => $cookies,
     'r_uri' => $uri,
     'r_path' => $path,
-    'r_mtd' => $method,
+    'r_mtd' => \strtolower($method),
     'r_files' => $files,
     'r_get' => $get,
     'r_post' => $post,
     'r_body' => $body,
-    'r_close'  => isset($headers['connection']) && \strtolower($headers['connection']) === 'close',
+    'r_close' => isset($headers['connection']) && \strtolower($headers['connection']) === 'close',
     'r_expect_continue' => isset($headers['expect']) && \strtolower($headers['expect']) === '100-continue'
   ];
-  
-  return $rt;
 }
 
-function parse_kv(string $str, array &$out): void {
-  $len = \strlen($str);
-  $key = $val = '';
-  $reading_key = true;
-
-  for ($i = 0; $i < $len; $i++) {
-    $ch = $str[$i];
-
-    if ($reading_key) {
-      if ('=' === $ch) {
-        $reading_key = false;
-      } elseif ('&' === $ch) {
-        $out[$key] = '';
-        $key = '';
-      } else {
-        $key .= $ch;
-      }
-
-    } else {
-      if ('&' === $ch) {
-        $out[$key] = $val;
-        $key = '';
-        $val = '';
-        $reading_key = true;
-      } else {
-        $val .= $ch;
-      }
+/**
+ * Helper to parse query string or urlencoded form
+ */
+function parse_kv(string $input, array &$out): void {
+    foreach (explode('&', $input) as $pair) {
+        $eq = strpos($pair, '=');
+        if ($eq === false) continue;
+        $k = urldecode(substr($pair, 0, $eq));
+        $v = urldecode(substr($pair, $eq + 1));
+        $out[$k] = $v;
     }
-  }
+}
 
-  if ('' !== $key) $out[$key] = $val;
+/**
+ * Helper to parse multipart/form-data
+ */
+function parse_multipart(string $body, string $ctype, array &$post, array &$files): void {
+    if (!preg_match('/boundary=(.+)$/', $ctype, $m)) return;
+    $boundary = '--'.$m[1];
+    $parts = explode($boundary, $body);
+    array_pop($parts); // trailing --
+    array_shift($parts); // preamble
+
+    foreach ($parts as $p) {
+        $p = ltrim($p, "\r\n");
+        if ($p === '') continue;
+        [$header_str, $content] = explode("\r\n\r\n", $p, 2) + ['', ''];
+        $content = rtrim($content, "\r\n");
+        $h = [];
+        foreach (explode("\r\n", $header_str) as $line) {
+            $cpos = strpos($line, ':');
+            if ($cpos !== false) $h[strtolower(trim(substr($line,0,$cpos)))] = trim(substr($line,$cpos+1));
+        }
+        if (!isset($h['content-disposition'])) continue;
+        if (!preg_match('/name="([^"]+)"/', $h['content-disposition'], $nm)) continue;
+        $name = $nm[1];
+        if (preg_match('/filename="([^"]*)"/', $h['content-disposition'], $fn)) {
+            $filename = $fn[1];
+            $files[$name] = ['name'=>$filename,'body'=>$content];
+        } else {
+            $post[$name] = $content;
+        }
+    }
 }
 
 function http_status_code(): array {
@@ -497,7 +505,7 @@ function cpu_count(): int{
   $rt = 1;
   if (0 === \stripos(PHP_OS, 'WIN')) {
     $out = shell_exec('wmic cpu get NumberOfCores /value');
-    if ($out && \is_string($out) && preg_match('/NumberOfCores=(\d+)/', $out, $m)) { 
+    if ($out && \is_string($out) && preg_match('/NumberOfCores=(\d+)/', $out, $m)) { //@phpstan-ignore-line
       $rt = (int) $m[1];
     }
   
@@ -556,7 +564,7 @@ function route_compile(): array {
         continue;
       }
 
-      if (! isset($node['s'][$seg])) $node['s'][$seg] = ['s' => [], 'w' => null, 'r' => null];
+      if (! isset($node['s'][$seg])) $node['s'][$seg] = ['s' => [], 'w' => null, 'r' => null]; //@phpstan-ignore-line
       $node = &$node['s'][$seg];
     }
 
@@ -566,7 +574,7 @@ function route_compile(): array {
   return $rt;
 }
 
-function gui_abort_html(int $c = 404) {
+function gui_abort_html(int $c = 404): array {
   static $http_codes = null, $code_ar = null;
   if (\is_null($http_codes)) {
     $http_codes = http_status_code();
@@ -586,6 +594,8 @@ function gui_abort_html(int $c = 404) {
 }
 
 function route_run(array $req = []): ?array {
+  $rt = null;
+
   if (isset($req['r_uri']) && \is_string($req['r_uri'])) {
     global $gv_routecomp;
     $params = [];

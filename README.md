@@ -1,5 +1,12 @@
 # XZ Web Server
-XZ Web Server is a minimal high performance php web server, with fast routing and modules such as: firewall. not a HTTP RFC fully compliance.
+XZ Web Server is a minimal high performance php web server, with fast routing and modules such as: firewall. not a full HTTP RFC compliance.
+
+# Modules
+## HTTP
+A partial implementation of HTTP RFC server, classless. 
+
+## Firewall
+A partial implementation of OWASP Core RuleSet(CRS) only use phase 1 and 2, and cut down the rules to reduce the performance degraded. 
 
 # Get Started
 

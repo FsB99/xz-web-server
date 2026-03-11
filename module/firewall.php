@@ -10,193 +10,204 @@ if (\is_file($firewall_file)) {
   echo 'Error: Failed to load firewall rules'.PHP_EOL;
 }
 
-function firewall_compile(array $rules): array{
-  $rt = [1 => [], 2 => []];
+function firewall_compile(array $rules): array {
+  $rt = [];
 
   foreach ($rules as $r) {
-    $phase = $r['phase'] ?? 1;
-    if ($phase > 2) continue;
-
     $cr = [
       'id' => $r['id'],
+      'msg' => $r['msg'] ?? '',
       'score' => $r['score'] ?? 0,
       'conds' => []
     ];
 
     foreach ($r['rule'] as $c) {
-      $vars = (array) ($c['w'] ?? '');
+      $vars = (array) ($c['w'] ?? []);
+      if (!$vars) continue;
 
       $cond = [
         'var' => $vars,
-        'key' => strtolower($c['wpr'] ?? '')
+        'key' => isset($c['wpr']) ? strtolower($c['wpr']) : '',
+        'op'  => 'default',
+        'val' => null,
       ];
 
-      if (isset($c['not'])) {
-        $cond['not']  = $c['not'];
+      foreach (['eq','not_eq','gt','empty','utf','byte_range','range','maxl','contains','rx','in'] as $op) {
+        if (isset($c[$op])) {
+          $cond['op'] = $op;
+          $cond['val'] = $c[$op];
+          break;
+        }
       }
 
-      if (isset($c['eq'])) {
-        $cond['op']  = 'eq';
-        $cond['val'] = $c['eq'];
-
-      } elseif (isset($c['maxl'])) {
-        $cond['op']  = 'maxl';
-        $cond['val'] = $c['maxl'];
-
-      } elseif (isset($c['in'])) {
+      // handle 'in' as associative set
+      if ($cond['op'] === 'in') {
         $set = [];
-
-        foreach ($c['in'] as $v) $set[strtoupper($v)] = 1;
-
-        $cond['op']  = 'in';
+        foreach ((array)$cond['val'] as $v) $set[$v] = 1;
         $cond['val'] = $set;
+      }
 
-      } elseif (isset($c['contains'])) {
-        $cond['op']  = 'contains';
-        $cond['val'] = $c['contains'];
-
-      } elseif (isset($c['rx'])) {
-        $cond['op']  = 'rx';
-        $cond['val'] = $c['rx'];
-
-      } else {
-        continue;
+      // keep regex as string only
+      if ($cond['op'] === 'rx') {
+        if (@preg_match($cond['val'], '') === false) {
+          echo "Invalid regex: {$r['id']}" . PHP_EOL;
+          continue;
+        }
       }
 
       $cr['conds'][] = $cond;
     }
 
-    $rt[$phase][] = $cr;
-  }
+    // group by request key
+    foreach ($cr['conds'] as $cond) {
+      foreach ($cond['var'] as $v) {
+        $req_key = match(strtolower($v)) {
+          'args','get','args_names' => 'r_get',
+          'post' => 'r_post',
+          'header','request_headers' => 'r_head',
+          'cookie' => 'r_cookie',
+          'files' => 'r_files',
+          'uri','request_uri' => 'r_uri',
+          'path' => 'r_path',
+          'method','request_method' => 'r_mtd',
+          'body','request_body' => 'r_body',
+          'ip','remote_addr' => 'r_ip',
+          default => null
+        };
 
-  return $rt;
-}
-
-function firewall_get_var(array $req, string $var, string $key): array|string|null{
-  return match ($var) {
-    'method' => $req['r_mtd'] ?? 'get',
-    'uri' => $req['r_uri'] ?? null,
-    'path' => $req['r_path'] ?? null,
-    'body' => $req['r_body'] ?? null,
-    'header' => $req['r_head'][$key] ?? null,
-    'header_name' => array_keys($req['r_head']) ?? null,
-    'cookie' => $req['r_cookie'][$key] ?? null,
-    'cookie_name' => isset($req['r_cookie']) ? array_keys($req['r_cookie']) : null,
-    'get' => $req['r_get'][$key] ?? null,
-    'get_name' => isset($req['r_get']) ? array_keys($req['r_get']) : null,
-    'post' => $req['r_post'][$key] ?? null,
-    'get_name' => isset($req['r_post']) ? array_keys($req['r_get']) : null,
-    default => null
-  };
-}
-
-function firewall_match_cond(array $cond, array $req): bool{
-  foreach ($cond['var'] as $var) {
-    $v = firewall_get_var($req, $var, $cond['key']);
-    if ($v === null) continue;
-
-    // debug
-    // print_r($v);
-    // echo PHP_EOL;
-
-    if (is_array($v)) {
-      // flat array
-      $pass = true;
-      if ($flat_ar = firewall_array_is_flat($v)) {
-        foreach ($v as $vv) {
-          $ok = match ($cond['op']) {
-            'eq' => $vv === $cond['val'],
-            'in' => (bool) isset($cond['val'][\strtoupper($vv)]),
-            'maxl' => \strlen($vv) > $cond['val'],
-            'contains' => \str_contains($vv, $cond['val']),
-            'rx' => (bool) \preg_match($cond['val'], $vv),
-            default => false,
-          };
-
-          // invert logic if 'not' is set
-          if (! empty($cond['not'])) $ok = !$ok;
-          if (! $ok) {
-            $pass = false;
-            break;
-          }
-        }
-
-        return $pass;
-      
-      // associative array
-      } else {
-        $pass = true;
-        foreach ($v as $k => $vv) {
-          // key 
-          $ok_key = match ($cond['op']) {
-            'eq' => $k === $cond['val'],
-            'in' => (bool) isset($cond['val'][\strtoupper($k)]),
-            'maxl' => \strlen($k) > $cond['val'],
-            'contains' => \str_contains($k, $cond['val']),
-            'rx' => (bool) \preg_match($cond['val'], $k),
-            default => false,
-          };
-
-          // invert logic if 'not' is set
-          if (! empty($cond['not'])) $ok_key = !$ok_key;
-          if (! $ok_key) {
-            $pass = false;
-            break;
-          }
-
-          // value 
-          $ok_value = match ($cond['op']) {
-            'eq' => $vv === $cond['val'],
-            'in' => (bool) isset($cond['val'][\strtoupper($vv)]),
-            'maxl' => \strlen($vv) > $cond['val'],
-            'contains' => \str_contains($vv, $cond['val']),
-            'rx' => (bool) \preg_match($cond['val'], $vv),
-            default => false,
-          };
-
-          // invert logic if 'not' is set
-          if (! empty($cond['not'])) $ok_value = !$ok_value;
-          if (! $ok_value) {
-            $pass = false;
-            break;
-          }
+        if ($req_key) {
+          $rt[$req_key][] = [
+            'id' => $cr['id'],
+            'msg' => $cr['msg'],
+            'score' => $cr['score'],
+            'cond' => $cond
+          ];
         }
       }
-
-    } else {
-      $ok = match ($cond['op']) {
-        'eq' => $v === $cond['val'],
-        'in' => (bool) isset($cond['val'][\strtoupper($v)]),
-        'maxl' => \strlen($v) > $cond['val'],
-        'contains' => \str_contains($v, $cond['val']),
-        'rx' => (bool) \preg_match($cond['val'], $v),
-        default => false,
-      };
-
-      // invert logic if 'not' is set
-      if (! empty($cond['not'])) $ok = !$ok;
-      if ($ok) return true;
     }
   }
 
-  return false;
+  // file_put_contents('./tmp/compile.json', json_encode($rt));
+  return $rt;
 }
 
-function firewall_run(array $req): bool{
-  $rt = false;
+function firewall_get_var(array $req, string $var, string $key): array|string|null {
+  switch ($var) {
+    case 'req_line':
+      return ($req['r_mtd'] ?? '') . ' ' . ($req['r_uri'] ?? '') . ' HTTP/1.1';
+    case 'uri':
+      return $req['r_uri'] ?? null;
+    case 'path':
+      return $req['r_path'] ?? null;
+    case 'method':
+      return $req['r_mtd'] ?? 'get';
+    case 'body':
+      return $req['r_body'] ?? null;
+
+    // Arrays
+    case 'args':
+    case 'args_names':
+    case 'args_get':
+    case 'args_post':
+    case 'cookie':
+    case 'cookie_names':
+    case 'files':
+    case 'files_names':
+    case 'header':
+    case 'header_names':
+      $map = [
+        'args' => 'r_get',
+        'args_names' => 'r_get',
+        'args_get' => 'r_get',
+        'args_post' => 'r_post',
+        'cookie' => 'r_cookie',
+        'cookie_names' => 'r_cookie',
+        'files' => 'r_files',
+        'files_names' => 'r_files',
+        'header' => 'r_head',
+        'header_names' => 'r_head',
+      ];
+
+      $arr = $req[$map[$var]] ?? [];
+
+      if ($key !== '' && isset($arr[$key])) {
+        if (str_ends_with($var,'_names')) return [$key];
+        return is_array($arr[$key]) ? $arr[$key] : [$arr[$key]];
+      }
+
+      if (str_ends_with($var,'_names')) return array_keys($arr);
+      return array_values($arr);
+  }
+
+  return null;
+}
+
+function firewall_match_cond(array $cond, array $req): bool {
+  foreach ($cond['var'] as $var) {
+    $values = firewall_get_var($req, $var, $cond['key']);
+    if ($values === null) continue;
+    if (!is_array($values)) $values = [$values];
+
+    foreach ($values as $v) {
+      if ($v === null) continue;
+
+      $ok = false;
+      switch ($cond['op']) {
+        case 'utf':
+          $ok = valid_utf8($v);
+          break;
+        case 'byte_range':
+          $ok = valid_byte_range($v, $cond['val'][0], $cond['val'][1]);
+          break;
+        case 'eq':
+          $ok = $v === $cond['val'];
+          break;
+        case 'not_eq':
+          $ok = $v !== $cond['val'];
+          break;
+        case 'gt':
+          $ok = $v > $cond['val'];
+          break;
+        case 'in':
+          $ok = isset($cond['val'][strtoupper((string)$v)]);
+          break;
+        case 'range':
+          $ok = $v >= $cond['val'][0] && $v <= $cond['val'][1];
+          break;
+        case 'maxl':
+          $ok = strlen($v) <= $cond['val'];
+          break;
+        case 'contains':
+          $ok = str_contains((string)$v, $cond['val']);
+          break;
+        case 'rx':
+          $ok = preg_match($cond['val'], $v) === 1;
+          break;
+        default:
+          $ok = false;
+      }
+
+      if (! empty($cond['not'])) $ok = !$ok;
+      if (! $ok) return false; // fail fast
+    }
+  }
+  return true;
+}
+
+function firewall_run(array $req, int $threshold = 5): bool {
   static $CRS = null;
-  $score = 0;
-  $hits  = [];
-  $threshold = 5;
   if (\is_null($CRS)) {
     global $crs_rules;
     $CRS = firewall_compile($crs_rules);
   }
+  $score = 0;
+  $hits = $msgs = [];
 
-  foreach ([1,2] as $phase) {
-    foreach ($CRS[$phase] as $rule) {
+  foreach ($CRS as $req_key => $rules) {
+    foreach ($rules as $rule) {
+      if (!isset($rule['conds']) || ! \is_array($rule['conds'])) continue;
       $matched = true;
-
+      
       foreach ($rule['conds'] as $cond) {
         if (! firewall_match_cond($cond, $req)) {
           $matched = false;
@@ -208,22 +219,22 @@ function firewall_run(array $req): bool{
 
       $score += $rule['score'];
       $hits[] = $rule['id'];
+      $msgs[] = $rule['msg'];
 
       if ($score >= $threshold) break 2;
     }
   }
 
   if ($score >= $threshold) {
-    // todo, maybe log this, but for now just print on CLI
-    // $rs = [
-    //   'score' => $score,
-    //   'hits' => $hits,
-    //   'blocked' => $score >= $threshold
-    // ];
-    // print_r($rs);
-    $rt = true;
+    // debug
+    // print_r([
+    //     'id' => $hits,
+    //     'msg' => $msgs,
+    // ]);
+    return true;
   }
-  return $rt;
+
+  return false;
 }
 
 function firewall_readfile(string $file): array {
@@ -241,6 +252,37 @@ function firewall_readfile(string $file): array {
   return $rt;
 }
 
-function firewall_array_is_flat(array $array): bool {
-  return array_keys($array) === range(0, count($array) - 1);
+function valid_byte_range(string $s, int $min = 1, int $max = 255): bool{
+  $len = \strlen($s);
+  for ($i = 0; $i < $len; $i++) {
+    $b = \ord($s[$i]);
+    if ($b < $min || $b > $max) return false;
+  }
+  return true;
+}
+
+function valid_utf8(string $s): bool{
+  $utf = ('' === $s || (preg_match('/^./us', $s) === 1));
+  echo 'utf: '.($utf ? 1 : 0).PHP_EOL;
+  return $utf;
+}
+
+function valid_regex(string $pattern): bool {
+  static $eh = null;
+  if (\is_null($eh)) $eh = function(){};
+
+  set_error_handler($eh, E_WARNING);
+  $ok = preg_match($pattern, '') !== false;
+  restore_error_handler();
+  return $ok;
+}
+
+if (! \function_exists('array_is_list')) {
+  function array_is_list(array $arr): bool {
+    $i = 0;
+    foreach ($arr as $k => $_) {
+      if ($k !== $i++) return false;
+    }
+    return true;
+  }
 }

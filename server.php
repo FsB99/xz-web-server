@@ -21,12 +21,12 @@ $GLOBALS['server_cnf'] = [
 
 $GLOBALS['routes'] = [
   ['path' => '/', 'm' => 'get', 'fn' => 'gui_homepage', 'mw' => []],
-  ['path' => '/test', 'm' => 'get', 'fn' => 'gui_testpage', 'mw' => []],
 ];
 
 include './module/webf.php';
 include './module/http.php';
 
+global $server_cnf;
 static $module_enabled = null, $module_list = null;
 if (\is_null($module_enabled)) {
   global $server_cnf;

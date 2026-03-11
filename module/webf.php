@@ -12,14 +12,3 @@ function gui_homepage(): array {
     'r_body' => 'This is Homepage',
   ];
 }
-
-function gui_testpage(): array {
-  return [
-    'r_type' => 'html',
-    'r_code' => 200,
-    'r_header' => [
-      'Content-Type' => 'text/html',
-    ],
-    'r_body' => 'This is Test page',
-  ];
-}

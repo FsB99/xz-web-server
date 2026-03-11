@@ -9,18 +9,18 @@ $php_function_names_933150 = firewall_readfile('./module/firewall/php_function_n
 $rx_933150 = '~('.implode('|', $php_function_names_933150).')~i';
 
 return [
-  [
-    'id' => 933100,
-    'phase' => 1,
-    'pl' => 1,
-    'atk_cat' => ['php_injection'],
-    'capec' => [1000, 152, 242],
-    'score' => 5,
-    'msg' => 'PHP Injection Attack: PHP Open Tag Found',
-    'rule' => [
-      ['w' => ['cookie', 'get'], 'rx' => '~(?i)<\?(?:php[\s\x0b]|[\s\x0b=]|xml(?:[\s\x0b]+[^a-z]|:)|$)|\[[/\x5c]?php\]|\{/?php\}~'],
-    ],
-  ],
+  // [
+  //   'id' => 933100,
+  //   'phase' => 1,
+  //   'pl' => 1,
+  //   'atk_cat' => ['php_injection'],
+  //   'capec' => [1000, 152, 242],
+  //   'score' => 5,
+  //   'msg' => 'PHP Injection Attack: PHP Open Tag Found',
+  //   'rule' => [
+  //     ['w' => ['cookie', 'get'], 'rx' => '~(?i)<\?(?:php[\s\x0b]|[\s\x0b=]|xml(?:[\s\x0b]+[^a-z]|:)|$)|\[[/\x5c]?php\]|\{/?php\}~'],
+  //   ],
+  // ],
   [
     'id' => 933110,
     'phase' => 2,
@@ -30,7 +30,7 @@ return [
     'score' => 5,
     'msg' => 'PHP Injection Attack: PHP Script File Upload Found',
     'rule' => [
-      ['w' => ['files', 'header', 'files'], 'rx' => '~.*\.ph(?:p\d*|tml|ar|ps|t|pt)\.*$~'],
+      ['w' => ['header'], 'rx' => '~.*\.ph(?:p\d*|tml|ar|ps|t|pt)\.*$~'],
     ],
   ],
   [
@@ -42,21 +42,21 @@ return [
     'score' => 5,
     'msg' => 'PHP Injection Attack: Configuration Directive Found',
     'rule' => [
-      ['w' => ['cookie', 'get'], 'rx' => '~(?i)\b(?:a(?:llow_url_(?:fopen|include)|pc.(?:coredump_unmap|en(?:able(?:_cli|d)|tries_hint)|(?:gc_)?ttl|mmap_file_mask|preload_path|s(?:erializer|hm_s(?:egments|ize)|lam_defense)|use_request_time)|rg_separator.(?:in|out)put|ssert.(?:active|(?:bai|quiet_eva)l|callback|exception|warning)|uto_(?:(?:ap|pre)pend_file|detect_line_endings|globals_jit))|b(?:cmath.scale|rowscap)|c(?:gi.(?:check_shebang_line|(?:discard_pat|np)h|f(?:ix_pathinfo|orce_redirect)|r(?:edirect_status_env|fc2616_headers))|hild_terminate|li(?:_server.color|.p(?:ager|rompt))|om.(?:a(?:llow_dcom|utoregister_(?:(?:casesensitiv|verbos)e|typelib))|(?:code_pag|typelib_fil)e|dotnet_version)|url.cainfo)|d(?:ate.(?:(?:default_l(?:at|ong)itud|timezon)e|sun(?:rise|set)_zenith)|ba.default_handler|efault_(?:(?:charse|socket_timeou)t|mimetype)|is(?:able_(?:classe|function)|play_(?:startup_)?error)s|oc(?:_roo|ref_(?:ex|roo))t)|e(?:n(?:able_(?:dl|post_data_reading)|gine)|rror_(?:(?:(?:ap|pre)pend_str|report)in|lo)g|x(?:i(?:f.(?:decode_(?:jis|unicode)_(?:intel|motorola)|encode_(?:jis|unicode))|t_on_timeout)|tension(?:_dir)?|p(?:ect.(?:log(?:file|user)|match_max|timeout)|ose_php)))|f(?:astcgi.(?:impersonate|logging)|fi.(?:enable|preload)|il(?:e_uploads|ter.default(?:_flags)?))|g(?:d.jpeg_ignore_warning|eoip.custom_directory)|h(?:ard_timeout|ighlight.(?:(?:commen|defaul)t|html|keyword|string)|tml_errors)|i(?:b(?:ase.(?:(?:allow_persisten|time(?:stamp)?forma)t|d(?:ateformat|efault_(?:charset|db|password|user))|max_(?:links|persistent))|m_db2.(?:binmode|i(?:5_(?:all(?:_pconnec|ow_commi)t|dbcs_alloc|ignore_userid)|nstance_name)))|conv.(?:in(?:put|ternal)|output)_encoding|g(?:binary.compact_strings|nore_(?:repeated_(?:errors|source)|user_abort))|m(?:a(?:gick.(?:locale_fix|progress_monitor|skip_version_check)|p.enable_insecure_rsh)|plicit_flush)|n(?:clude_path|put_encoding|t(?:ernal_encoding|l.(?:default_locale|error_level|use_exceptions))))|l(?:dap.max_links|og_errors(?:_max_len)?)|m(?:a(?:gic_quotes_(?:gpc|runtime)|il(?:.(?:add_x_header|force_extra_parameters|log)|parse.def_charset)|x_(?:execution_time|file_uploads|input_(?:nesting_level|time|vars)))|bstring.(?:detect_order|encoding_translation|func_overload|http_(?:input|output(?:_conv_mimetypes)?)|internal_encoding|language|regex_(?:retry|stack)_limit|s(?:trict_detection|ubstitute_character))|crypt.(?:algorithm|mode)s_dir|em(?:cache(?:.(?:allow_failover|c(?:hunk_size|ompress_threshold)|(?:default_por|lock_timeou)t|hash_(?:function|strategy)|max_failover_attempts|protocol|(?:session_)?redundancy)|d.(?:compression_(?:factor|t(?:hreshold|ype))|default_(?:binary_protocol|con(?:nect_timeout|sistent_hash))|s(?:e(?:rializer|ss_(?:binary(?:_protocol)?|con(?:nect_timeout|sistent_hash(?:_type)?)|lock(?:_(?:expire|retries|wait(?:_m(?:ax|in))?)|ing)|number_of_replicas|p(?:ersistent|refix)|r(?:andomize_replica_read|emove_failed(?:_servers)?)|s(?:asl_(?:password|username)|erver_failure_limit)))|tore_retry_count)|use_sasl))|ory_limit)|ysql(?:.(?:allow_(?:local_infile|persistent)|connect_timeout|default_(?:(?:hos|socke)t|p(?:assword|ort)|user)|max_(?:links|persistent)|trace_mode)|i.(?:allow_(?:local_infile|persistent)|default_(?:(?:hos|socke)t|p(?:ort|w)|user)|local_infile_directory|max_(?:links|persistent)|r(?:econnect|ollback_on_cached_plink))|nd.(?:collect_(?:memory_)?statistics|debug|(?:fetch_data_cop|sha256_server_public_ke)y|log_mask|mempool_default_size|net_(?:cmd_buffer_size|read_(?:buffer_size|timeout))|trace_alloc)))|o(?:ci8.(?:(?:connection_clas|event|old_oci_close_semantic)s|default_prefetch|max_persistent|p(?:ersistent_timeout|ing_interval|r(?:efetch_lob_size|ivileged_connect))|statement_cache_size)|dbc.(?:(?:allow|check)_persistent|default(?:_(?:cursortype|db|pw|user)|binmode|lrl)|max_(?:links|persistent))|p(?:cache.(?:blacklist_filename|c(?:ache_id|onsistency_checks)|dups_fix|e(?:nable(?:_(?:cli|file_override))?|rror_log)|f(?:ast_shutdown|ile_(?:cache(?:_(?:consistency_checks|fallback|only))?|update_protection)|orce_restart_timeout)|(?:huge_code_page|save_comment)s|in(?:herited_hack|terned_strings_buffer)|jit(?:_(?:b(?:isect_limit|(?:lacklist_(?:root|side)_trac|uffer_siz)e)|debug|hot_(?:func|loop|return|side_exit)|max_(?:exit_counter|(?:loop_unro|polymorphic_ca)ll|r(?:ecursive_(?:call|return)|oot_trace)|side_trace)s|prof_threshold))?|lo(?:ckfile_path|g_verbosity_level)|m(?:ax_(?:accelerated_files|(?:file_siz|wasted_percentag)e)|emory_consumption|map_base)|opt(?:_debug|imization)_level|pr(?:e(?:ferred_memory_model|load(?:_user)?)|otect_memory)|re(?:cord_warnings|strict_api|validate_(?:freq|path))|use_cwd|validate_(?:permission|root|timestamps))|en(?:_basedir|ssl.ca(?:file|path)))|utput_(?:(?:buffer|encod)ing|handler))|p(?:cre.(?:(?:backtrack|recursion)_lim|j)it|do(?:_odbc.(?:connection_pooling|db2_instance_name)|.dsn)|gsql.(?:a(?:llow|uto_reset)_persistent|(?:ignore|log)_notice|max_(?:links|persistent))|h(?:ar.(?:cache_list|re(?:adonly|quire_hash))|pdbg.(?:eol|path))|recision|ost_max_size)|r(?:e(?:alpath_cache_(?:size|ttl)|gister_argc_argv|port_(?:memleaks|zend_debug)|quest_order)|unkit.(?:internal_override|superglobal))|s(?:e(?:aslog.(?:appender(?:_retry)?|buffer_(?:disabled_in_cli|size)|d(?:efault_(?:basepath|datetime_format|logger|template)|isting_(?:(?:by_hou|folde)r|type))|ignore_warning|level|re(?:call_depth|mote_(?:hos|por|timeou)t)|t(?:hrow_exception|r(?:ace_(?:e(?:rror|xception)|notice|warning)|im_wrap))|use_buffer)|ndmail_(?:from|path)|rialize_precision|ssion.(?:auto_start|c(?:ache_(?:expire|limiter)|ookie_(?:domain|httponly|(?:lifetim|s(?:amesit|ecur))e|path))|entropy_(?:file|length)|gc_(?:divisor|maxlifetime|probability)|hash_(?:bits_per_character|function)|(?:lazy_writ|nam)e|referer_check|s(?:ave_(?:handler|path)|erialize_handler|id_(?:bits_per_character|length))|trans_sid_(?:host|tag)s|u(?:pload_progress.(?:cleanup|enabled|(?:min_)?freq|name|prefix)|se_(?:(?:only_)?cookies|strict_mode|trans_sid))))|hort_open_tag|mtp(?:_port)?|oap.wsdl_cache(?:_(?:dir|enabled|limit|ttl))?|ql(?:.safe_mode|ite3.(?:defensive|extension_dir))|tomp.default_(?:broker|(?:connection|read)_timeout_u?sec)|woole.(?:aio_thread_num|display_errors|enable_(?:coroutine|library|preemptive_scheduler)|(?:fast_serializ|u(?:nixsock_buffer_siz|se_(?:namespac|shortnam)))e)|ys(?:_temp_dir|log.(?:f(?:acility|ilter)|ident)|vshm.init_mem))|t(?:aint.e(?:nable|rror_level)|idy.(?:clean_output|default_config)|ra(?:ck_errors|der.real_(?:precision|round_mode)))|u(?:nserialize_(?:callback_func|max_depth)|opz.(?:disable|exit|overloads)|pload(?:_(?:max_filesize|tmp_dir)|progress.file.filename_template)|rl_rewriter.(?:host|tag)s|ser_(?:agent|dir|ini.(?:cache_ttl|filename)))|v(?:8js.(?:flag|max_disposed_context)s|ariables_order|ld.(?:(?:activ|execut)e|skip_(?:ap|pre)pend))|w(?:in(?:cache.(?:chkinterval|enablecli|f(?:c(?:achesize|enabled(?:filter)?|ndetect)|ile(?:count|mapdir))|(?:ignorelis|namesal)t|maxfilesize|oc(?:achesize|enabled(?:filter)?)|reroute(?:_enabled|ini)|s(?:cachesize|rwlocks)|ttlmax|uc(?:achesize|enabled))|dows.show_crt_warning)|khtmltox.graphics)|x(?:bithack|hprof.output_dir|mlrpc_error(?:_number|s))|ya(?:c(?:.(?:compress_threshold|debug|enable(?:_cli)?|(?:key|value)s_memory_size|serializer)|onf.(?:check_dela|director)y)|f.(?:action_prefer|cache_config|environ|forward_limit|l(?:ibrary|owcase_path)|name_s(?:eparator|uffix)|use_(?:namespace|spl_autoload))|ml.(?:decode_(?:binary|(?:ph|timestam)p)|output_(?:canonical|indent|width))|r.(?:(?:connect_)?timeout|debug|expose_info|packager)|z.(?:keepalive|log_mask))|z(?:end(?:_extension|.(?:assertions|(?:detect_unicod|multibyt)e|e(?:nable_gc|xception_(?:ignore_args|string_param_max_len))|s(?:cript_encoding|ignal_check)))|lib.output_(?:compression(?:_level)?|handler)|ookeeper.(?:recv_timeout|sess(?:_lock_wait|ion_lock))))[\s\x0b]*=[^=]~'],
+      ['w' => ['cookie'], 'rx' => '~(?i)\b(?:a(?:llow_url_(?:fopen|include)|pc.(?:coredump_unmap|en(?:able(?:_cli|d)|tries_hint)|(?:gc_)?ttl|mmap_file_mask|preload_path|s(?:erializer|hm_s(?:egments|ize)|lam_defense)|use_request_time)|rg_separator.(?:in|out)put|ssert.(?:active|(?:bai|quiet_eva)l|callback|exception|warning)|uto_(?:(?:ap|pre)pend_file|detect_line_endings|globals_jit))|b(?:cmath.scale|rowscap)|c(?:gi.(?:check_shebang_line|(?:discard_pat|np)h|f(?:ix_pathinfo|orce_redirect)|r(?:edirect_status_env|fc2616_headers))|hild_terminate|li(?:_server.color|.p(?:ager|rompt))|om.(?:a(?:llow_dcom|utoregister_(?:(?:casesensitiv|verbos)e|typelib))|(?:code_pag|typelib_fil)e|dotnet_version)|url.cainfo)|d(?:ate.(?:(?:default_l(?:at|ong)itud|timezon)e|sun(?:rise|set)_zenith)|ba.default_handler|efault_(?:(?:charse|socket_timeou)t|mimetype)|is(?:able_(?:classe|function)|play_(?:startup_)?error)s|oc(?:_roo|ref_(?:ex|roo))t)|e(?:n(?:able_(?:dl|post_data_reading)|gine)|rror_(?:(?:(?:ap|pre)pend_str|report)in|lo)g|x(?:i(?:f.(?:decode_(?:jis|unicode)_(?:intel|motorola)|encode_(?:jis|unicode))|t_on_timeout)|tension(?:_dir)?|p(?:ect.(?:log(?:file|user)|match_max|timeout)|ose_php)))|f(?:astcgi.(?:impersonate|logging)|fi.(?:enable|preload)|il(?:e_uploads|ter.default(?:_flags)?))|g(?:d.jpeg_ignore_warning|eoip.custom_directory)|h(?:ard_timeout|ighlight.(?:(?:commen|defaul)t|html|keyword|string)|tml_errors)|i(?:b(?:ase.(?:(?:allow_persisten|time(?:stamp)?forma)t|d(?:ateformat|efault_(?:charset|db|password|user))|max_(?:links|persistent))|m_db2.(?:binmode|i(?:5_(?:all(?:_pconnec|ow_commi)t|dbcs_alloc|ignore_userid)|nstance_name)))|conv.(?:in(?:put|ternal)|output)_encoding|g(?:binary.compact_strings|nore_(?:repeated_(?:errors|source)|user_abort))|m(?:a(?:gick.(?:locale_fix|progress_monitor|skip_version_check)|p.enable_insecure_rsh)|plicit_flush)|n(?:clude_path|put_encoding|t(?:ernal_encoding|l.(?:default_locale|error_level|use_exceptions))))|l(?:dap.max_links|og_errors(?:_max_len)?)|m(?:a(?:gic_quotes_(?:gpc|runtime)|il(?:.(?:add_x_header|force_extra_parameters|log)|parse.def_charset)|x_(?:execution_time|file_uploads|input_(?:nesting_level|time|vars)))|bstring.(?:detect_order|encoding_translation|func_overload|http_(?:input|output(?:_conv_mimetypes)?)|internal_encoding|language|regex_(?:retry|stack)_limit|s(?:trict_detection|ubstitute_character))|crypt.(?:algorithm|mode)s_dir|em(?:cache(?:.(?:allow_failover|c(?:hunk_size|ompress_threshold)|(?:default_por|lock_timeou)t|hash_(?:function|strategy)|max_failover_attempts|protocol|(?:session_)?redundancy)|d.(?:compression_(?:factor|t(?:hreshold|ype))|default_(?:binary_protocol|con(?:nect_timeout|sistent_hash))|s(?:e(?:rializer|ss_(?:binary(?:_protocol)?|con(?:nect_timeout|sistent_hash(?:_type)?)|lock(?:_(?:expire|retries|wait(?:_m(?:ax|in))?)|ing)|number_of_replicas|p(?:ersistent|refix)|r(?:andomize_replica_read|emove_failed(?:_servers)?)|s(?:asl_(?:password|username)|erver_failure_limit)))|tore_retry_count)|use_sasl))|ory_limit)|ysql(?:.(?:allow_(?:local_infile|persistent)|connect_timeout|default_(?:(?:hos|socke)t|p(?:assword|ort)|user)|max_(?:links|persistent)|trace_mode)|i.(?:allow_(?:local_infile|persistent)|default_(?:(?:hos|socke)t|p(?:ort|w)|user)|local_infile_directory|max_(?:links|persistent)|r(?:econnect|ollback_on_cached_plink))|nd.(?:collect_(?:memory_)?statistics|debug|(?:fetch_data_cop|sha256_server_public_ke)y|log_mask|mempool_default_size|net_(?:cmd_buffer_size|read_(?:buffer_size|timeout))|trace_alloc)))|o(?:ci8.(?:(?:connection_clas|event|old_oci_close_semantic)s|default_prefetch|max_persistent|p(?:ersistent_timeout|ing_interval|r(?:efetch_lob_size|ivileged_connect))|statement_cache_size)|dbc.(?:(?:allow|check)_persistent|default(?:_(?:cursortype|db|pw|user)|binmode|lrl)|max_(?:links|persistent))|p(?:cache.(?:blacklist_filename|c(?:ache_id|onsistency_checks)|dups_fix|e(?:nable(?:_(?:cli|file_override))?|rror_log)|f(?:ast_shutdown|ile_(?:cache(?:_(?:consistency_checks|fallback|only))?|update_protection)|orce_restart_timeout)|(?:huge_code_page|save_comment)s|in(?:herited_hack|terned_strings_buffer)|jit(?:_(?:b(?:isect_limit|(?:lacklist_(?:root|side)_trac|uffer_siz)e)|debug|hot_(?:func|loop|return|side_exit)|max_(?:exit_counter|(?:loop_unro|polymorphic_ca)ll|r(?:ecursive_(?:call|return)|oot_trace)|side_trace)s|prof_threshold))?|lo(?:ckfile_path|g_verbosity_level)|m(?:ax_(?:accelerated_files|(?:file_siz|wasted_percentag)e)|emory_consumption|map_base)|opt(?:_debug|imization)_level|pr(?:e(?:ferred_memory_model|load(?:_user)?)|otect_memory)|re(?:cord_warnings|strict_api|validate_(?:freq|path))|use_cwd|validate_(?:permission|root|timestamps))|en(?:_basedir|ssl.ca(?:file|path)))|utput_(?:(?:buffer|encod)ing|handler))|p(?:cre.(?:(?:backtrack|recursion)_lim|j)it|do(?:_odbc.(?:connection_pooling|db2_instance_name)|.dsn)|gsql.(?:a(?:llow|uto_reset)_persistent|(?:ignore|log)_notice|max_(?:links|persistent))|h(?:ar.(?:cache_list|re(?:adonly|quire_hash))|pdbg.(?:eol|path))|recision|ost_max_size)|r(?:e(?:alpath_cache_(?:size|ttl)|gister_argc_argv|port_(?:memleaks|zend_debug)|quest_order)|unkit.(?:internal_override|superglobal))|s(?:e(?:aslog.(?:appender(?:_retry)?|buffer_(?:disabled_in_cli|size)|d(?:efault_(?:basepath|datetime_format|logger|template)|isting_(?:(?:by_hou|folde)r|type))|ignore_warning|level|re(?:call_depth|mote_(?:hos|por|timeou)t)|t(?:hrow_exception|r(?:ace_(?:e(?:rror|xception)|notice|warning)|im_wrap))|use_buffer)|ndmail_(?:from|path)|rialize_precision|ssion.(?:auto_start|c(?:ache_(?:expire|limiter)|ookie_(?:domain|httponly|(?:lifetim|s(?:amesit|ecur))e|path))|entropy_(?:file|length)|gc_(?:divisor|maxlifetime|probability)|hash_(?:bits_per_character|function)|(?:lazy_writ|nam)e|referer_check|s(?:ave_(?:handler|path)|erialize_handler|id_(?:bits_per_character|length))|trans_sid_(?:host|tag)s|u(?:pload_progress.(?:cleanup|enabled|(?:min_)?freq|name|prefix)|se_(?:(?:only_)?cookies|strict_mode|trans_sid))))|hort_open_tag|mtp(?:_port)?|oap.wsdl_cache(?:_(?:dir|enabled|limit|ttl))?|ql(?:.safe_mode|ite3.(?:defensive|extension_dir))|tomp.default_(?:broker|(?:connection|read)_timeout_u?sec)|woole.(?:aio_thread_num|display_errors|enable_(?:coroutine|library|preemptive_scheduler)|(?:fast_serializ|u(?:nixsock_buffer_siz|se_(?:namespac|shortnam)))e)|ys(?:_temp_dir|log.(?:f(?:acility|ilter)|ident)|vshm.init_mem))|t(?:aint.e(?:nable|rror_level)|idy.(?:clean_output|default_config)|ra(?:ck_errors|der.real_(?:precision|round_mode)))|u(?:nserialize_(?:callback_func|max_depth)|opz.(?:disable|exit|overloads)|pload(?:_(?:max_filesize|tmp_dir)|progress.file.filename_template)|rl_rewriter.(?:host|tag)s|ser_(?:agent|dir|ini.(?:cache_ttl|filename)))|v(?:8js.(?:flag|max_disposed_context)s|ariables_order|ld.(?:(?:activ|execut)e|skip_(?:ap|pre)pend))|w(?:in(?:cache.(?:chkinterval|enablecli|f(?:c(?:achesize|enabled(?:filter)?|ndetect)|ile(?:count|mapdir))|(?:ignorelis|namesal)t|maxfilesize|oc(?:achesize|enabled(?:filter)?)|reroute(?:_enabled|ini)|s(?:cachesize|rwlocks)|ttlmax|uc(?:achesize|enabled))|dows.show_crt_warning)|khtmltox.graphics)|x(?:bithack|hprof.output_dir|mlrpc_error(?:_number|s))|ya(?:c(?:.(?:compress_threshold|debug|enable(?:_cli)?|(?:key|value)s_memory_size|serializer)|onf.(?:check_dela|director)y)|f.(?:action_prefer|cache_config|environ|forward_limit|l(?:ibrary|owcase_path)|name_s(?:eparator|uffix)|use_(?:namespace|spl_autoload))|ml.(?:decode_(?:binary|(?:ph|timestam)p)|output_(?:canonical|indent|width))|r.(?:(?:connect_)?timeout|debug|expose_info|packager)|z.(?:keepalive|log_mask))|z(?:end(?:_extension|.(?:assertions|(?:detect_unicod|multibyt)e|e(?:nable_gc|xception_(?:ignore_args|string_param_max_len))|s(?:cript_encoding|ignal_check)))|lib.output_(?:compression(?:_level)?|handler)|ookeeper.(?:recv_timeout|sess(?:_lock_wait|ion_lock))))[\s\x0b]*=[^=]~'],
     ],
   ],
-  [
-    'id' => 933130,
-    'phase' => 2,
-    'pl' => 1,
-    'atk_cat' => ['php_injection'],
-    'capec' => [1000, 152, 242],
-    'score' => 5,
-    'msg' => 'PHP Injection Attack: Variables Found',
-    'rule' => [
-      ['w' => ['cookie', 'get'], 'rx' => $rx_933130],
-    ],
-  ],
+  // [
+  //   'id' => 933130,
+  //   'phase' => 2,
+  //   'pl' => 1,
+  //   'atk_cat' => ['php_injection'],
+  //   'capec' => [1000, 152, 242],
+  //   'score' => 5,
+  //   'msg' => 'PHP Injection Attack: Variables Found',
+  //   'rule' => [
+  //     ['w' => ['cookie', 'get'], 'rx' => $rx_933130],
+  //   ],
+  // ],
   [
     'id' => 933135,
     'phase' => 2,
@@ -66,7 +66,7 @@ return [
     'score' => 5,
     'msg' => 'PHP Injection Attack: Variable Access Found',
     'rule' => [
-      ['w' => ['cookie', 'files_name', 'get'], 'rx' => '~\$\s*\{\s*\S[^\{\}]*\}~'],
+      ['w' => ['cookie'], 'rx' => '~\$\s*\{\s*\S[^\{\}]*\}~'],
     ],
   ],
   [
@@ -78,7 +78,7 @@ return [
     'score' => 5,
     'msg' => 'PHP Injection Attack: I/O Stream Found',
     'rule' => [
-      ['w' => ['cookie', 'get'], 'rx' => '~(?i)php://(?:std(?:in|out|err)|(?:in|out)put|fd|memory|temp|filter)~'],
+      ['w' => ['cookie'], 'rx' => '~(?i)php://(?:std(?:in|out|err)|(?:in|out)put|fd|memory|temp|filter)~'],
     ],
   ],
   [
@@ -90,7 +90,7 @@ return [
     'score' => 5,
     'msg' => 'PHP Injection Attack: Wrapper scheme detected',
     'rule' => [
-      ['w' => ['cookie', 'get'], 'rx' => '~(?:bzip2|expect|glob|ogg|(?:ph|r)ar|ssh2(?:.(?:s(?:hell|(?:ft|c)p)|exec|tunnel))?|z(?:ip|lib))://~'],
+      ['w' => ['cookie'], 'rx' => '~(?:bzip2|expect|glob|ogg|(?:ph|r)ar|ssh2(?:.(?:s(?:hell|(?:ft|c)p)|exec|tunnel))?|z(?:ip|lib))://~'],
     ],
   ],
   [
@@ -102,7 +102,7 @@ return [
     'score' => 5,
     'msg' => 'PHP Injection Attack: High-Risk PHP Function Name Found',
     'rule' => [
-      ['w' => ['cookie', 'get'], 'rx' => $rx_933150],
+      ['w' => ['cookie'], 'rx' => $rx_933150],
     ],
   ],
   [
@@ -114,7 +114,7 @@ return [
     'score' => 5,
     'msg' => 'PHP Injection Attack: High-Risk PHP Function Call Found',
     'rule' => [
-      ['w' => ['cookie', 'get', 'files_name'], 'rx' => "~(?i)\b\(?[\"']*(?:assert(?:_options)?|c(?:hr|reate_function)|e(?:val|x(?:ec|p))|f(?:ile(?:group)?|open|puts)|glob|i(?:mage(?:gif|(?:jpe|pn)g|wbmp|xbm)|s_a|ntval)|m(?:d5|kdir)|o(?:pendir|rd)|p(?:assthru|hpinfo|open|r(?:intf|ev))|r(?:eadfile|trim)|s(?:t(?:rip_tags|at)|ubstr|ystem)|tmpfile|u(?:n(?:(?:pac|lin)k|serialize)|sort))(?:/(?:\*.*?\*/|/[^\n\r]*)|#[^\n\r]*|[\s\x0b\"])*[\"']*\)?[\s\x0b]*\([^\)]*\)~"],
+      ['w' => ['cookie', 'args', 'files'], 'rx' => '~(?i)\b\(?["\']*(?:assert(?:_options)?|c(?:hr|reate_function)|e(?:val|x(?:ec|p))|f(?:ile(?:group)?|open|puts)|glob|i(?:mage(?:gif|(?:jpe|pn)g|wbmp|xbm)|s_a|ntval)|m(?:d5|kdir)|o(?:pendir|rd)|p(?:assthru|hpinfo|open|r(?:intf|ev))|r(?:eadfile|trim)|s(?:t(?:rip_tags|at)|ubstr|ystem)|tmpfile|u(?:n(?:(?:pac|lin)k|serialize)|sort))(?:/(?:\*.*?\*/|/[^\n\r]*)|#[^\n\r]*|[\s\x0b\"])*["\']*\)?[\s\x0b]*\([^\)]*\)~'],
     ],
   ],
   [
@@ -126,7 +126,7 @@ return [
     'score' => 5,
     'msg' => 'PHP Injection Attack: Serialized Object Injection',
     'rule' => [
-      ['w' => ['cookie', 'header', 'get'], 'rx' => "~[oOcC]:\d+:\".+?\":\d+:\{.*}~"],
+      ['w' => ['cookie', 'header', 'get'], 'rx' => '~[oOcC]:\d+:".+?":\d+:\{.*}~'],
     ],
   ],
   [
@@ -138,7 +138,7 @@ return [
     'score' => 5,
     'msg' => 'PHP Injection Attack: Variable Function Call Found',
     'rule' => [
-      ['w' => ['cookie', 'files_name', 'get'], 'rx' => '~\$+(?:[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*|\s*\{.+})(?:\s|\[.+\]|\{.+}|/\*.*\*/|//.*|#.*)*\(.*\)~'],
+      ['w' => ['cookie', 'files', 'args'], 'rx' => '~\$+(?:[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*|\s*\{.+})(?:\s|\[.+\]|\{.+}|/\*.*\*/|//.*|#.*)*\(.*\)~'],
     ],
   ],
 ];

@@ -1,0 +1,23 @@
+parameters:
+  level: 6
+  tmpDir: ./tmp
+  treatPhpDocTypesAsCertain: false
+  reportUnmatchedIgnoredErrors: false
+  inferPrivatePropertyTypeFromConstructor: false
+
+  paths:
+    - server.php
+    - module
+
+  ignoreErrors:
+    - '#Call to function is_null#'
+    - '#no value type specified in iterable type array#'
+    - '#with no type specified.#'
+  
+  excludePaths:
+    - module/firewall/test
+  
+  parallel:
+    maximumNumberOfProcesses: 4
+    jobSize: 20
+    minimumNumberOfJobsPerProcess: 2

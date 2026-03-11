@@ -1,9 +1,18 @@
 # Notes
+- 11-03-2026
+  - Change HTTP parser.
+  - Adding static code analysis PHPStan(SAST).
+  - Change the implementation of CRS to reduce the performance degraded.
+  - Changes regex since many are broken with PHP.
+  - Use multi process for faster tests.
+  - From CRS regression tests, failed: 194 / 3.360.
+
 - 10-03-2026
   - Fix some minor HTTP
   - Adding OWASP CRS tests as pivot to see how good the implementation is (pilot)
-  - Adding partial implementaion of CRS.
+  - Adding partial implementation of CRS.
   - Fix CRS engine.
+
 - 09-03-2026
   - Changed into modules
   - Moved core from server.php to module/http.php
@@ -11,5 +20,6 @@
   - Routes function call to module/webf.php
   - Adding module HTTP fast routing
   - Adding module Firewall
+
 - 26-02-2026
-  -  Partial RFC 7230, 9112, 7231 & 9110 
+  -  Partial RFC 7230, 9112, 7231 & 9110
