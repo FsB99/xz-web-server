@@ -3,7 +3,10 @@
 if (! \defined('ABSPATH')) exit(0);
 
 $scanners_user_agents_data = firewall_readfile('./module/firewall/scanners_user_agents.data');
-$rx_913100 = '~('.implode('|', $scanners_user_agents_data).')~i';
+$rx_913100 = '~(?:'.\implode('|', \array_map(
+  fn($v) => \preg_quote($v, '~'),
+  $scanners_user_agents_data
+)).')~i';
 
 return [
   [

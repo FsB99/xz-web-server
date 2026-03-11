@@ -9,7 +9,10 @@ $rx_934110 = '~(?:' . implode('|', array_map(
 )) . ')~i';
 
 $ssrf_no_scheme = firewall_readfile('./module/firewall/ssrf_no_scheme.data');
-$rx_934190 = '~('.implode('|', $ssrf_no_scheme).')~i';
+$rx_934190 = '~(?:' . implode('|', array_map(
+  fn($v) => preg_quote($v, '~'),
+  $ssrf_no_scheme
+)) . ')~i';
 
 return [
   [
