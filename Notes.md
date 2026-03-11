@@ -2,10 +2,10 @@
 - 11-03-2026
   - Change HTTP parser.
   - Adding static code analysis PHPStan(SAST).
-  - Change the implementation of CRS to reduce the performance degraded (-14.4%).
-  - Changes regex since many are broken with PHP.
+  - Change the implementation of CRS engine to reduce the performance degraded (-14.4%).
+  - Change regex's for compatibility with PHP.
   - Use multi process for faster tests.
-  - From CRS regression tests, failed: 194 / 3.360.
+  - Tests using CRS regression tests as pivot, failed: 194 / 3.360.
   - Adding ASCII table.
 
 - 10-03-2026
@@ -23,4 +23,5 @@
   - Adding module Firewall
 
 - 26-02-2026
+
   -  Partial RFC 7230, 9112, 7231 & 9110
