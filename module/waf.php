@@ -253,7 +253,7 @@ function waf_run(array $req, int $threshold = 5): bool{
   }
 
   foreach ($CRS as $slot => $rules) {
-    if (!isset($req[$slot]) || !$req[$slot]) continue;
+    if (! isset($req[$slot]) || ! $req[$slot]) continue;
 
     foreach ($rules as $rule) {
       $conds = $rule['conds'];
@@ -291,10 +291,10 @@ function waf_run(array $req, int $threshold = 5): bool{
 
   if ($score >= $threshold) {
     /* debug output */
-    print_r([
-      'waf'   => $hits,
-      'score' => $score
-    ]);
+    // print_r([
+    //   'waf'   => $hits,
+    //   'score' => $score
+    // ]);
     return true;
   }
 
