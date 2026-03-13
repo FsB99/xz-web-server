@@ -2,19 +2,19 @@
 // XZ Web Server by Fsb
 if (! \defined('ABSPATH')) exit(0);
 
-$lfi_os_files = waf_readfile('./module/firewall/lfi_os_files.data');
+$lfi_os_files = waf_readfile(ABSPATH.'/module/firewall/lfi_os_files.data');
 $rx_930120 = '~(?:'.\implode('|', \array_map(
   fn($v) => \preg_quote($v, '~'),
   $lfi_os_files
 )).')~i';
 
-$restricted_files = waf_readfile('./module/firewall/restricted_files.data');
+$restricted_files = waf_readfile(ABSPATH.'/module/firewall/restricted_files.data');
 $rx_930130 = '~(?:'.\implode('|', \array_map(
   fn($v) => \preg_quote($v, '~'),
   $restricted_files
 )).')~i';
 
-$ai_critical_artifacts = waf_readfile('./module/firewall/ai_critical_artifacts.data');
+$ai_critical_artifacts = waf_readfile(ABSPATH.'/module/firewall/ai_critical_artifacts.data');
 $rx_930140 = '~(?:'.\implode('|', \array_map(
   fn($v) => \preg_quote($v, '~'),
   $ai_critical_artifacts

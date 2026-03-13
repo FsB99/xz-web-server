@@ -2,7 +2,7 @@
 // XZ Web Server by Fsb
 if (! \defined('ABSPATH')) exit(0);
 
-$powershell_commands_data = waf_readfile('./module/firewall/windows_powershell_commands.data');
+$powershell_commands_data = waf_readfile(ABSPATH.'/module/firewall/windows_powershell_commands.data');
 $rx_932120 = '~(?:'.\implode('|', \array_map(
   fn($v) => \preg_quote($v, '~'),
   $powershell_commands_data

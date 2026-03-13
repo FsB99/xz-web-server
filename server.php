@@ -1,7 +1,7 @@
 <?php
 // XZ Web Server by Fsb
 declare(strict_types=1);
-define('ABSPATH', __DIR__);
+if (! \defined('ABSPATH')) define('ABSPATH', __DIR__);
 set_time_limit(0);
 error_reporting(E_ALL);
 
@@ -15,8 +15,8 @@ $GLOBALS['server_cnf'] = [
   'os' => (\strtoupper(\substr(PHP_OS, 0, 3)) === 'WIN' ? 'win' : 'unix'),
   'ext_ev' => \extension_loaded('ev'),
   'ext_pcntl' => \function_exists('pcntl_fork'),
-  'module_list' => ['waf'],
-  'module_enabled' => ['waf'], //['waf', 'xhprof'],
+  'module_list' => [], //['waf', 'xhprof'],
+  'module_enabled' => [], //['waf', 'xhprof'],
 
   // xhprof
   'xhprof_scan' => [], //['waf', 'http'],
@@ -28,8 +28,8 @@ $GLOBALS['routes'] = [
   ['path' => '/', 'm' => 'get', 'fn' => 'gui_homepage', 'mw' => []],
 ];
 
-include './module/webf.php';
-include './module/http.php';
+include ABSPATH.'/module/webf.php';
+include ABSPATH.'/module/http.php';
 
 global $server_cnf;
 static $module_enabled = null, $module_list = null;
@@ -40,8 +40,8 @@ if (\is_null($module_enabled)) {
 }
 
 foreach ($module_enabled as &$me) {
-  if (\in_array($me, $module_list)) {
-    include './module/'.$me.'.php';
+  if (\in_array($me, $module_list) && \is_file(ABSPATH.'/module/'.$me.'.php')) {
+    include ABSPATH.'/module/'.$me.'.php';
   }
 }
 echo PHP_EOL;

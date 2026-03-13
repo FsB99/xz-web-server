@@ -2,7 +2,7 @@
 // XZ Web Server by Fsb
 if (! \defined('ABSPATH')) exit(0);
 
-$scanners_user_agents_data = waf_readfile('./module/firewall/scanners_user_agents.data');
+$scanners_user_agents_data = waf_readfile(ABSPATH.'/module/firewall/scanners_user_agents.data');
 $rx_913100 = '~(?:'.\implode('|', \array_map(
   fn($v) => \preg_quote($v, '~'),
   $scanners_user_agents_data

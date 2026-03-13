@@ -728,5 +728,4 @@ function ascii_table(array $thead, array $tbody, array $tfoot): string {
   return $out;
 }
 
-
 $GLOBALS['gv_routecomp'] = route_compile();

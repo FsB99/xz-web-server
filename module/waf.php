@@ -2,8 +2,8 @@
 // XZ Web Server by Fsb
 if (! \defined('ABSPATH')) exit(0);
 
-include './module/waf_cnf.php';
-$waf_file = './module/waf_rules.php';
+include ABSPATH.'/module/waf_cnf.php';
+$waf_file = ABSPATH.'/module/waf_rules.php';
 
 if (\is_file($waf_file)) {
   include $waf_file;

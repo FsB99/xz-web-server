@@ -2,13 +2,13 @@
 // XZ Web Server by Fsb
 if (! \defined('ABSPATH')) exit(0);
 
-$php_variables = waf_readfile('./module/firewall/php_variables.data');
+$php_variables = waf_readfile(ABSPATH.'/module/firewall/php_variables.data');
 $rx_933130 = '~(?:'.\implode('|', array_map(
   fn($v) => preg_quote($v, '~'),
   $php_variables
 )).')~i';
 
-$php_function_names_933150 = waf_readfile('./module/firewall/php_function_names_933150.data');
+$php_function_names_933150 = waf_readfile(ABSPATH.'/module/firewall/php_function_names_933150.data');
 $rx_933150 = '~(?:'.\implode('|', array_map(
   fn($v) => preg_quote($v, '~'),
   $php_function_names_933150
