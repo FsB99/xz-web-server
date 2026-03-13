@@ -1,4 +1,10 @@
 # Notes
+- 12-03-2026
+  - Fix some minor HTTP parser.
+  - Experimental with few WAF engines but its seem this is the less buggy.
+  - Changed WAF test, since curl fixing the bad requests thus generated bad tests.
+  - Adding xhprof / profiling.
+  
 - 11-03-2026
   - Change HTTP parser.
   - Adding static code analysis PHPStan(SAST).
@@ -23,5 +29,4 @@
   - Adding module Firewall
 
 - 26-02-2026
-
   -  Partial RFC 7230, 9112, 7231 & 9110

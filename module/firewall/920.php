@@ -3,18 +3,18 @@
 if (! \defined('ABSPATH')) exit(0);
 
 return [
-  [
-    'id' => 920100,
-    'phase' => 1,
-    'pl' => 1,
-    'atk_cat' => ['protocol'],
-    'capec' => [1000, 210, 272],
-    'score' => 5,
-    'msg' => 'Invalid HTTP Request Line',
-    'rule' => [
-      ['w' => ['req_line'], 'rx' => '^(?i)(?:GET /[^#?]*(?:\?[^\s\x0b#]*)?(?:#[^\s\x0b]*)?|(?:CONNECT (?:[0-9]{1,3}\.){3}[0-9]{1,3}(?::[0-9]+)?|[A-Za-z0-9_\-]+:[0-9]+)|OPTIONS \*|[A-Za-z]{3,10}[\s\x0b]+(?:[0-9A-Za-z]{3,7}?://[A-Za-z0-9_\-]*(?::[0-9]+)?/[^#?]*(?:\?[^\s\x0b#]*)?(?:#[^\s\x0b]*)?)?[\s\x0b]+[A-Za-z0-9.\-]+))$', 'not' => true],
-    ],
-  ],
+  // [
+  //   'id' => 920100, // skipped for now
+  //   'phase' => 1,
+  //   'pl' => 1,
+  //   'atk_cat' => ['protocol'],
+  //   'capec' => [1000, 210, 272],
+  //   'score' => 5,
+  //   'msg' => 'Invalid HTTP Request Line',
+  //   'rule' => [
+  //     ['w' => ['req_line'], 'rx' => '^(?i)(?:GET /[^#?]*(?:\?[^\s\x0b#]*)?(?:#[^\s\x0b]*)?|(?:CONNECT (?:[0-9]{1,3}\.){3}[0-9]{1,3}(?::[0-9]+)?|[A-Za-z0-9_\-]+:[0-9]+)|OPTIONS \*|[A-Za-z]{3,10}[\s\x0b]+(?:[0-9A-Za-z]{3,7}?://[A-Za-z0-9_\-]*(?::[0-9]+)?/[^#?]*(?:\?[^\s\x0b#]*)?(?:#[^\s\x0b]*)?)?[\s\x0b]+[A-Za-z0-9.\-]+))$', 'not' => true],
+  //   ],
+  // ],
   [
     'id' => 920120,
     'phase' => 2,
@@ -36,7 +36,7 @@ return [
     'score' => 5,
     'msg' => 'Content-Length HTTP header is not numeric',
     'rule' => [
-      ['w' => ['header'], 'wpr' => 'Content-Length', 'rx' => '~^\d+$~', 'not' => true],
+      ['w' => ['header'], 'wpr' => 'content-length', 'rx' => '~^\d+$~', 'not' => true],
     ],
   ],
   [
@@ -48,8 +48,8 @@ return [
     'score' => 5,
     'msg' => 'GET or HEAD Request with Body Content',
     'rule' => [
-      ['w' => ['method'], 'in' => ['GET', 'HEAD']],
-      ['w' => ['header'], 'wpr' => 'Content-Length', 'not' => true, 'rx' => '~^[0-9]+$~'],
+      ['w' => ['method'], 'in' => ['get', 'head']],
+      ['w' => ['header'], 'wpr' => 'content-length', 'not' => true, 'rx' => '~^[0-9]+$~'],
     ],
   ],
   [
@@ -61,10 +61,24 @@ return [
     'score' => 5,
     'msg' => 'GET or HEAD Request with Transfer-Encoding',
     'rule' => [
-      ['w' => ['method'], 'in' => ['GET', 'HEAD']],
-      ['w' => ['header'], 'wpr' => 'Transfer-Encoding', 'not' => true, 'rx' => '~^[0-9]+$~'],
+      ['w' => ['method'], 'in' => ['get', 'head']],
+      ['w' => ['header'], 'wpr' => 'transfer-encoding', 'not' => true, 'rx' => '~^[0-9]+$~'],
     ],
   ],
+  // [
+  //   'id' => 920180, // skipped for now
+  //   'phase' => 1,
+  //   'pl' => 1,
+  //   'atk_cat' => ['protocol'],
+  //   'capec' => [1000, 210, 272],
+  //   'score' => 4,
+  //   'msg' => 'POST without Content-Length and Transfer-Encoding headers',
+  //   'rule' => [
+  //     ['w' => ['within'], 'dunno' => 'HTTP/2 HTTP/2.0 HTTP/3 HTTP/3.0'],
+  //     ['w' => ['method'], 'in' => ['post']],
+  //     ['w' => ['header'], 'wpr' => 'transfer-encoding', 'not' => true, 'rx' => '~^[0-9]+$~'],
+  //   ],
+  // ],
   [
     'id' => 920181,
     'phase' => 1,
@@ -74,8 +88,8 @@ return [
     'score' => 4,
     'msg' => 'Content-Length and Transfer-Encoding headers present',
     'rule' => [
-      ['w' => ['header'], 'wpr' => 'Transfer-Encoding', 'eq' => '0'],
-      ['w' => ['header'], 'wpr' => 'Content-Length', 'eq' => '0'],
+      ['w' => ['header'], 'wpr' => 'transfer-encoding', 'eq' => '0'],
+      ['w' => ['header'], 'wpr' => 'content-length', 'eq' => '0'],
     ],
   ],
   [
@@ -87,7 +101,7 @@ return [
     'score' => 4,
     'msg' => 'Obsolete Request-Range header detected',
     'rule' => [
-      ['w' => ['header'], 'wpr' => 'Request-Range', 'gt' => 0],
+      ['w' => ['header'], 'wpr' => 'range', 'rx' => '~(\d+)-(\d+)~'],
     ],
   ],
   [
@@ -99,7 +113,7 @@ return [
     'score' => 4,
     'msg' => 'Obsolete Request-Range header detected',
     'rule' => [
-      ['w' => ['header'], 'wpr' => 'Request-Range', 'eq' => '0'],
+      ['w' => ['header'], 'wpr' => 'request-range', 'gt' => '0'],
     ],
   ],
   [
@@ -111,7 +125,7 @@ return [
     'score' => 4,
     'msg' => 'Multiple/Conflicting Connection Header Data Found',
     'rule' => [
-      ['w' => ['header'], 'wpr' => 'Connection', 'rx' => '~\b([a-z\-]+)\b\s*,\s*\1\b~i'],
+      ['w' => ['header'], 'wpr' => 'connection', 'rx' => '~\b([a-z\-]+)\b\s*,\s*\1\b~i'],
     ],
   ],
   [
@@ -146,7 +160,7 @@ return [
     'capec' => [1000, 210, 272],
     'score' => 5,
     'msg' => 'Invalid character in request (null character)',
-     'rule' => [
+    'rule' => [
       ['w' => ['uri', 'header', 'args', 'args_names'], 'byte_range' => [1,255]],
     ],
   ],
@@ -159,7 +173,7 @@ return [
     'score' => 5,
     'msg' => 'Request Missing a Host Header',
      'rule' => [
-      ['w' => ['header'], 'wpr' => 'Host', 'eq' => '0'],
+      ['w' => ['header'], 'wpr' => 'host', 'eq' => '0'],
     ],
   ],
   [
@@ -171,23 +185,123 @@ return [
     'score' => 5,
     'msg' => 'Request Missing a Host Header',
      'rule' => [
-      ['w' => ['header'], 'wpr' => 'Host', 'rx' => '~^$~'],
+      ['w' => ['header'], 'wpr' => 'host', 'rx' => '~^$~'],
+    ],
+  ],
+  [
+    'id' => 920310,
+    'phase' => 1,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272],
+    'score' => 5,
+    'msg' => 'Request Has an Empty Accept Header',
+     'rule' => [
+      ['w' => ['header'], 'wpr' => 'accept', 'rx' => '~^$~'],
+      ['w' => ['method'], 'in' => ['options'], 'not' => true],
+      ['w' => ['header'], 'wpr' => 'user-agent', 'rx' => '~AppleWebKit Android Business Enterprise Entreprise~', 'not' => true],
+    ],
+  ],
+  [
+    'id' => 920311,
+    'phase' => 1,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272],
+    'score' => 5,
+    'msg' => 'Request Has an Empty Accept Header',
+     'rule' => [
+      ['w' => ['header'], 'wpr' => 'accept', 'rx' => '~^$~'],
+      ['w' => ['method'], 'in' => ['options'], 'not' => true],
+      ['w' => ['header'], 'wpr' => 'user-agent', 'eq' => '0'],
+    ],
+  ],
+  [
+    'id' => 920330,
+    'phase' => 1,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272],
+    'score' => 2,
+    'msg' => 'Empty User Agent Header',
+     'rule' => [
+      ['w' => ['header'], 'wpr' => 'user-agent', 'rx' => '~^$~'],
+    ],
+  ],
+  [
+    'id' => 920340,
+    'phase' => 1,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272],
+    'score' => 5,
+    'msg' => 'Content-Type header missing from request with non-zero Content-Length',
+     'rule' => [
+      ['w' => ['header'], 'wpr' => 'content-length', 'rx' => '~^0$~', 'not' => true],
+      ['w' => ['header'], 'wpr' => 'content-type', 'eq' => '0'],
+    ],
+  ],
+  [
+    'id' => 920350,
+    'phase' => 1,
+    'pl' => 1,
+    'atk_cat' => ['protocol'],
+    'capec' => [1000, 210, 272],
+    'score' => 4,
+    'msg' => 'Content-Type header missing from request with non-zero Content-Length',
+     'rule' => [
+      ['w' => ['header'], 'wpr' => 'host', 'rx' => '~(?:^([\d.]+|\[[\da-f:]+\]|[\da-f:]+)(:[\d]+)?$)~'],
     ],
   ],
   // [
-  //   'id' => 920320, // todo
-  //   'phase' => 1,
-  //   'pl' => 2,
+  //   'id' => 920380, // skipped for now
+  //   'phase' => 2,
+  //   'pl' => 1,
   //   'atk_cat' => ['protocol'],
   //   'capec' => [1000, 210, 272],
-  //   'score' => 2,
-  //   'msg' => 'Missing User Agent Header',
-  //   'rule' => [
-  //     ['w' => ['header'], 'wpr' => 'User-Agent', 'in' => ['', null]],
+  //   'score' => 5,
+  //   'msg' => 'Too many arguments in request',
+  //    'rule' => [
+  //     ['w' => ['args_num'], 'gt' => 255],
   //   ],
   // ],
+  // [
+  //   'id' => 920360, // skipped for now
+  //   'phase' => 2,
+  //   'pl' => 1,
+  //   'atk_cat' => ['protocol'],
+  //   'capec' => [1000, 210, 272],
+  //   'score' => 5,
+  //   'msg' => 'Argument name too long',
+  //    'rule' => [
+  //     ['w' => ['args_names'], 'gt' => 255],
+  //   ],
+  // ],
+  //   'id' => 920370, // skipped for now
+  //   'phase' => 2,
+  //   'pl' => 1,
+  //   'atk_cat' => ['protocol'],
+  //   'capec' => [1000, 210, 272],
+  //   'score' => 5,
+  //   'msg' => 'Argument value too long',
+  //    'rule' => [
+  //     ['w' => ['args'], 'gt' => 255],
+  //   ],
+  // ],
+  //   'id' => 920390, // skipped for now
+  //   'phase' => 2,
+  //   'pl' => 1,
+  //   'atk_cat' => ['protocol'],
+  //   'capec' => [1000, 210, 272],
+  //   'score' => 5,
+  //   'msg' => 'Total arguments size exceeded',
+  //    'rule' => [
+  //     ['w' => ['tot_args_leng'], 'gt' => 255],
+  //   ],
+  // ],
+  
   [
-    'id' => 920121,
+    'id' => 920121, 
     'phase' => 2,
     'pl' => 2,
     'atk_cat' => ['protocol'],
@@ -207,7 +321,7 @@ return [
     'score' => 5,
     'msg' => 'Invalid Cache-Control request header',
     'rule' => [
-      ['w' => ['header'], 'wpr' => 'Cache-Control', 'rx' => '^\s*(?:max-age=\d+|s-maxage=\d+|max-stale(?:=\d+)?|min-fresh=\d+|no-cache(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\"?)?|no-store|no-transform|only-if-cached|must-revalidate|proxy-revalidate|public|private(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\"?)?)(?:\s*,\s*(?:max-age=\d+|s-maxage=\d+|max-stale(?:=\d+)?|min-fresh=\d+|no-cache(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\"?)?|no-store|no-transform|only-if-cached|must-revalidate|proxy-revalidate|public|private(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\"?)?))*\s*$', 'not'=> true],
+      ['w' => ['header'], 'wpr' => 'cache-control', 'rx' => '^\s*(?:max-age=\d+|s-maxage=\d+|max-stale(?:=\d+)?|min-fresh=\d+|no-cache(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\"?)?|no-store|no-transform|only-if-cached|must-revalidate|proxy-revalidate|public|private(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\"?)?)(?:\s*,\s*(?:max-age=\d+|s-maxage=\d+|max-stale(?:=\d+)?|min-fresh=\d+|no-cache(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\"?)?|no-store|no-transform|only-if-cached|must-revalidate|proxy-revalidate|public|private(?:="?[!#$%&\'*+\-.^_`|~0-9A-Za-z]+\"?)?))*\s*$', 'not'=> true],
     ],
   ],
   [
@@ -219,7 +333,7 @@ return [
     'score' => 5,
     'msg' => 'Invalid character in request headers (outside of very strict set)',
     'rule' => [
-      ['w' => ['header'], 'wpr' => 'Accept-Encoding', 'rx' => '#(?:br|compress|deflate|(?:pack200-)?gzip|identity|\*|aes128gcm|exi|zstd|x-(?:compress|gzip))#i', 'not' => true],
+      ['w' => ['header'], 'wpr' => 'accept-encoding', 'rx' => '#(?:br|compress|deflate|(?:pack200-)?gzip|identity|\*|aes128gcm|exi|zstd|x-(?:compress|gzip))#i', 'not' => true],
     ],
   ],
   [
@@ -231,7 +345,7 @@ return [
     'score' => 5,
     'msg' => 'Invalid character in request headers (outside of very strict set)',
     'rule' => [
-      ['w' => ['header'], 'wpr' => 'Sec-Fetch-User', 'rx' => '~^(?:\?[01])?$~', 'not' => true],
+      ['w' => ['header'], 'wpr' => 'sec-fetch-user', 'rx' => '~^(?:\?[01])?$~', 'not' => true],
     ],
   ],
   [
@@ -243,7 +357,7 @@ return [
     'score' => 5,
     'msg' => 'Invalid character in request headers (outside of very strict set)',
     'rule' => [
-      ['w' => ['header'], 'wpr' => 'Sec-CH-UA-Mobile', 'rx' => '~^(?:\?[01])?$~', 'not' => true],
+      ['w' => ['header'], 'wpr' => 'sec-ch-ua-mobile', 'rx' => '~^(?:\?[01])?$~', 'not' => true],
     ],
   ],
   [

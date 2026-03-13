@@ -15,8 +15,13 @@ $GLOBALS['server_cnf'] = [
   'os' => (\strtoupper(\substr(PHP_OS, 0, 3)) === 'WIN' ? 'win' : 'unix'),
   'ext_ev' => \extension_loaded('ev'),
   'ext_pcntl' => \function_exists('pcntl_fork'),
-  'module_list' => ['firewall'],
-  'module_enabled' => ['firewall'],
+  'module_list' => ['waf', 'xhprof'],
+  'module_enabled' => ['waf', 'xhprof'], //['waf', 'xhprof'],
+
+  // xhprof
+  'xhprof_scan' => ['waf'], //['waf', 'http'],
+  'xhprof_lib_path' => '',
+  'xhprof_uiserver' => '',
 ];
 
 $GLOBALS['routes'] = [

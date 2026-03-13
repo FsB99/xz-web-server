@@ -2,13 +2,13 @@
 // XZ Web Server by Fsb
 if (! \defined('ABSPATH')) exit(0);
 
-$php_variables = firewall_readfile('./module/firewall/php_variables.data');
+$php_variables = waf_readfile('./module/firewall/php_variables.data');
 $rx_933130 = '~(?:'.\implode('|', array_map(
   fn($v) => preg_quote($v, '~'),
   $php_variables
 )).')~i';
 
-$php_function_names_933150 = firewall_readfile('./module/firewall/php_function_names_933150.data');
+$php_function_names_933150 = waf_readfile('./module/firewall/php_function_names_933150.data');
 $rx_933150 = '~(?:'.\implode('|', array_map(
   fn($v) => preg_quote($v, '~'),
   $php_function_names_933150
@@ -168,7 +168,7 @@ return [
     'score' => 5,
     'msg' => 'PHP Injection Attack: PHP Session File Upload Attempt',
     'rule' => [
-      ['w' => ['header'],  'wpr' => 'X-Filename', 'rx' => '~(?:^|[/\x5c])sess_[,\-0-9a-z]{20,256}$~'],
+      ['w' => ['header'],  'wpr' => 'x-filename', 'rx' => '~(?:^|[/\x5c])sess_[,\-0-9a-z]{20,256}$~'],
     ],
   ],
   [
@@ -180,7 +180,7 @@ return [
     'score' => 5,
     'msg' => 'PHP Injection Attack: PHP Session File Upload Attempt',
     'rule' => [
-      ['w' => ['header'],  'wpr' => 'X_Filename', 'rx' => '~(?:^|[/\x5c])sess_[,\-0-9a-z]{20,256}$~'],
+      ['w' => ['header'],  'wpr' => 'x_filename', 'rx' => '~(?:^|[/\x5c])sess_[,\-0-9a-z]{20,256}$~'],
     ],
   ],
   [
@@ -192,7 +192,7 @@ return [
     'score' => 5,
     'msg' => 'PHP Injection Attack: PHP Session File Upload Attempt',
     'rule' => [
-      ['w' => ['header'],  'wpr' => 'X.Filename', 'rx' => '~(?:^|[/\x5c])sess_[,\-0-9a-z]{20,256}$~'],
+      ['w' => ['header'],  'wpr' => 'x.filename', 'rx' => '~(?:^|[/\x5c])sess_[,\-0-9a-z]{20,256}$~'],
     ],
   ],
   [
@@ -204,7 +204,7 @@ return [
     'score' => 5,
     'msg' => 'PHP Injection Attack: PHP Session File Upload Attempt',
     'rule' => [
-      ['w' => ['header'],  'wpr' => 'X-File-Name', 'rx' => '~(?:^|[/\x5c])sess_[,\-0-9a-z]{20,256}$~'],
+      ['w' => ['header'],  'wpr' => 'x-file-name', 'rx' => '~(?:^|[/\x5c])sess_[,\-0-9a-z]{20,256}$~'],
     ],
   ],
 ];

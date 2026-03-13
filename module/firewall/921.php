@@ -108,7 +108,7 @@ return [
     'score' => 5,
     'msg' => 'Content-Type header: Dangerous content type outside the mime type declaration',
     'rule' => [
-      ['w' => ['header'], 'wpr' => 'Content-Type', 'rx' => '~^[^\s\x0b,;]+[\s\x0b,;].*?(?:application/(?:.+\+)?json|(?:application/(?:soap\+)?|text/)xml)~'],
+      ['w' => ['header'], 'wpr' => 'content-type', 'rx' => '~^[^\s\x0b,;]+[\s\x0b,;].*?(?:application/(?:.+\+)?json|(?:application/(?:soap\+)?|text/)xml)~'],
     ],
   ],
   [
@@ -144,7 +144,7 @@ return [
     'score' => 5,
     'msg' => 'Content-Type header: Dangerous content type outside the mime type declaration',
     'rule' => [
-      ['w' => ['header'], 'wpr' => 'Content-Type', 'rx' => '~^[^\s\x0b,;]+[\s\x0b,;].*?\b(?:((?:tex|multipar)t|application)|((?:audi|vide)o|image|cs[sv]|(?:vn|relate)d|p(?:df|lain)|json|(?:soa|cs)p|x(?:ml|-www-form-urlencoded)|form-data|x-amf|(?:octe|repor)t|stream)|([\+/]))\b~'],
+      ['w' => ['header'], 'wpr' => 'content-type', 'rx' => '~^[^\s\x0b,;]+[\s\x0b,;].*?\b(?:((?:tex|multipar)t|application)|((?:audi|vide)o|image|cs[sv]|(?:vn|relate)d|p(?:df|lain)|json|(?:soa|cs)p|x(?:ml|-www-form-urlencoded)|form-data|x-amf|(?:octe|repor)t|stream)|([\+/]))\b~'],
     ],
   ],
   [
@@ -156,7 +156,7 @@ return [
     'score' => 5,
     'msg' => 'HTTP Range Header detected',
     'rule' => [
-      ['w' => ['header'], 'wpr' => 'Range', 'gt' => 0],
+      ['w' => ['header'], 'wpr' => 'range', 'gt' => 0],
     ],
   ],
   [
