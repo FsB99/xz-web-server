@@ -92,7 +92,7 @@ function waf_compile(array $rules): array{
   }
 
   echo 'CRS loaded: '.$rules_added.PHP_EOL;
-  file_put_contents('tmp/compile.json', json_encode($rt));
+  // file_put_contents('tmp/compile.json', json_encode($rt));
   return $rt;
 }
 

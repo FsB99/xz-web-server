@@ -15,11 +15,11 @@ $GLOBALS['server_cnf'] = [
   'os' => (\strtoupper(\substr(PHP_OS, 0, 3)) === 'WIN' ? 'win' : 'unix'),
   'ext_ev' => \extension_loaded('ev'),
   'ext_pcntl' => \function_exists('pcntl_fork'),
-  'module_list' => ['waf', 'xhprof'],
-  'module_enabled' => ['waf', 'xhprof'], //['waf', 'xhprof'],
+  'module_list' => ['waf'],
+  'module_enabled' => ['waf'], //['waf', 'xhprof'],
 
   // xhprof
-  'xhprof_scan' => ['waf'], //['waf', 'http'],
+  'xhprof_scan' => [], //['waf', 'http'],
   'xhprof_lib_path' => '',
   'xhprof_uiserver' => '',
 ];
@@ -46,4 +46,6 @@ foreach ($module_enabled as &$me) {
 }
 echo PHP_EOL;
 
-if (\in_array(PHP_SAPI, ['cli', 'micro'])) server_start($server_cnf['host'], $server_cnf['port'], $server_cnf['workers']);
+if (! \defined('LAUNCHER')) {
+  if (\in_array(PHP_SAPI, ['cli', 'micro'])) server_start($server_cnf['host'], $server_cnf['port'], $server_cnf['workers']);
+}
