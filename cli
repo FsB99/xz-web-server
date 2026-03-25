@@ -17,7 +17,9 @@ if ('waf' === $copt_a) {
   profiler_flush();
 
 } elseif ('perf_run' === $copt_a) {
-  $dir = 'C:/xampp/xhprof/xhprof/xhprof_html/';
+  include '/module/xhprofcnf.php';
+  global $xhprofhtml_dir;
+  $dir = $xhprofhtml_dir;
   chdir($dir);
   if ($pso = popen('php -S localhost:70', 'r')) {
     pclose($pso);
@@ -60,50 +62,6 @@ function fetch_url(array $dt): int {
   }
 
   return $status;
-
-  // //post
-  // $data = [
-  //   'name' => 'john',
-  //   'age' => 25
-  // ];
-
-  // $context = stream_context_create([
-  //     'http' => [
-  //         'method' => 'POST',
-  //         'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
-  //         'content' => http_build_query($data)
-  //     ]
-  // ]);
-
-  // $response = file_get_contents("http://example.com", false, $context);
-
-  // // post json
-  // $data = json_encode([
-  //   'name' => 'john',
-  //   'age' => 25
-  // ]);
-
-  // $context = stream_context_create([
-  //     'http' => [
-  //         'method' => 'POST',
-  //         'header' => "Content-Type: application/json\r\n",
-  //         'content' => $data
-  //     ]
-  // ]);
-
-  // $response = file_get_contents("http://example.com/api", false, $context);
-
-  // // header
-  // $headers =
-  //   "User-Agent: MyAgent\r\n".
-  //   "Accept: application/json\r\n";
-
-  // $context = stream_context_create([
-  //     'http' => [
-  //         'method' => 'GET',
-  //         'header' => $headers
-  //     ]
-  // ]);
 }
 
 function test_waf_dev(string|int $scan_id): void {
@@ -159,85 +117,6 @@ function test_waf_dev(string|int $scan_id): void {
       }
     }
   }
-
-  // chunk
-  // $chunks = array_chunk($reqs, 5);
-
-  // foreach ($chunks as $chunk) {
-  //   $id = $chunk['id'] ?? 0;
-  //   $exclude_this = (\in_array($id, $crs_test_must_http_code_200));
-
-  //   $code = fetch_url($chunk);
-
-  //   if (\in_array($code, [200])) {
-  //     if ($exclude_this) {
-  //       echo "{$chunk['id']}|{$chunk['test_id']}: {$code} Pass".PHP_EOL;
-  //     } else {
-  //       echo "{$chunk['id']}|{$chunk['test_id']}|{$chunk['desc']}: {$code} [FAILED]".PHP_EOL;
-
-  //       $tmp[] = [
-  //         'id' => $chunk['id'],
-  //         'test_id' => $chunk['test_id'],
-  //         'desc' => $chunk['desc']
-  //       ];
-  //     }
-      
-  //   } else {
-  //     echo "{$chunk['id']}|{$chunk['test_id']}: {$code} Pass".PHP_EOL;
-  //   }
-
-    // $mh = curl_multi_init();
-    // $chs = [];
-
-    // foreach ($chunk as $k => $r) {
-    //   $ch = curl_init();
-    //   curl_setopt_array($ch, [
-    //     CURLOPT_URL => $r['url'],
-    //     CURLOPT_RETURNTRANSFER => true,
-    //     CURLOPT_CUSTOMREQUEST => strtoupper($r['method']),
-    //     CURLOPT_HTTPHEADER => $r['headers'],
-    //     CURLOPT_TIMEOUT => 5,
-    //     CURLOPT_NOSIGNAL => 1,
-    //   ]);
-
-    //   curl_multi_add_handle($mh, $ch);
-    //   $chs[$k] = [$ch, $r];
-    // }
-
-    // do {
-    //   $status = curl_multi_exec($mh, $running);
-    //   curl_multi_select($mh);
-    // } while ($running && $status == CURLM_OK);
-
-    // foreach ($chs as [$ch, $meta]) {
-    //   $err = curl_errno($ch);
-    //   $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    //   $exclude_this = (\in_array($meta['id'], $crs_test_must_http_code_200));
-
-    //   if ($err || \in_array($code, [200])) {
-    //     if ($exclude_this) {
-    //       echo "{$meta['id']}|{$meta['test_id']}: {$code} Pass".PHP_EOL;
-    //     } else {
-    //       echo "{$meta['id']}|{$meta['test_id']}|{$meta['desc']}: {$code} [FAILED]".PHP_EOL;
-    //       print_r($r);
-    //       echo PHP_EOL;
-
-    //       $tmp[] = [
-    //         'id' => $meta['id'],
-    //         'test_id' => $meta['test_id'],
-    //         'desc' => $meta['desc']
-    //       ];
-    //     }
-        
-    //   } else {
-    //     echo "{$meta['id']}|{$meta['test_id']}: {$code} Pass".PHP_EOL;
-    //   }
-
-    //   curl_multi_remove_handle($mh, $ch);
-    // }
-
-    // curl_multi_close($mh);
-  // }
 
   if (! empty($tmp)) {
     echo 'FAILED: '.\count($tmp).'/'.\count($reqs).PHP_EOL;
