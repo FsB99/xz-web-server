@@ -15,7 +15,7 @@ parameters:
     - '#with no type specified.#'
   
   excludePaths:
-    - module/firewall/test
+    - test
   
   parallel:
     maximumNumberOfProcesses: 4

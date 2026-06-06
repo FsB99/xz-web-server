@@ -20,17 +20,23 @@ php server.php
 | --- | --- |
 | Go (std http) | ~209.734 |
 | XZ (Unix) | ~326.849 |
-| XZ (Unix with EV) | ~347.768 |
+| XZ (Unix with Ev) | ~453.350 |
 
 # NOTES
 [Developer Notes Link](https://github.com/FsB99/xz-web-server/blob/main/Notes.md)
 
-# Testing
+# Command Line
 
 ``` console
-// for SAST
-php test.php
+// SAST
+php cli
 
-// for WAF
-php test.php -a waf
+// for testing WAF
+php cli -a waf
+
+// flushing xhprof results
+php cli -a perf_flush
+
+// running xhprof
+php cli -a perf_run
 ```

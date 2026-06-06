@@ -23,7 +23,7 @@ function profiler_stop(string $tag = 'app'): string|bool|null {
 
   $data = xhprof_disable();
 
-  if (\function_exists('xhprof_disable') && \class_exists('XHProfRuns_Default') && '' !== $lib_path) {
+  if (\function_exists('xhprof_disable') && \class_exists('XHProfRuns_Default') && '' !== $lib_path) { //@phpstan-ignore-line
     $data = xhprof_disable();
     require_once "{$lib_path}/xhprof_lib/utils/xhprof_lib.php";
     require_once "{$lib_path}/xhprof_lib/utils/xhprof_runs.php";

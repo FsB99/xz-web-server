@@ -20,8 +20,11 @@ switch ($copt_a) {
     break;
 
   case 'perf_run':
-    include '/module/xhprofcnf.php';
+    include './module/xhprofcnf.php';
     global $xhprofhtml_dir;
+
+    if (null === $xhprofhtml_dir || '' === $xhprofhtml_dir) throw new InvalidArgumentException('XhProf directory empty or not set yet');
+    
     $dir = $xhprofhtml_dir;
     chdir($dir);
     if ($pso = popen('php -S localhost:70', 'r')) pclose($pso);
@@ -126,7 +129,9 @@ function test_waf_dev(string|int $scan_id): void {
 
 function test_waf_load_tests(string|int $scan_id): array|bool {
   $dir = './test/';
+  if (!\is_dir($dir)) mkdir('test');
   $rt = [];
+
   if ($dh = \opendir($dir)){
     while (($file = \readdir($dh)) !== false){
       if (\in_array($file, ['.', '..'])) continue;
@@ -141,7 +146,7 @@ function test_waf_load_tests(string|int $scan_id): array|bool {
         if ($tmp = test_waf_yml2arr($fpath)) {
           $rt[] = $tmp;
         } else {
-          echo 'failed load and read: '.$fpath.PHP_EOL;
+          echo "failed load and read: {$fpath}\n";
         }
       }
     }

@@ -233,7 +233,7 @@ function loop_select($server): void {
     $waf_on = \in_array('waf', $module_enabled, true);
   }
 
-  while (true) {
+  while (true) { //@phpstan-ignore-line
     $write = $except = [];
     $read = [$server];
 
@@ -614,8 +614,7 @@ function cpu_count(): int {
 
   if (0 === \stripos(PHP_OS, 'WIN')) {
     $out = shell_exec('wmic cpu get NumberOfCores /value');
-    if ($out && \is_string($out) && preg_match('/NumberOfCores=(\d+)/', $out, $m))  
-      $rt = (int) $m[1]; //@phpstan-ignore-line
+    if ($out && \is_string($out) && preg_match('/NumberOfCores=(\d+)/', $out, $m)) $rt = (int) $m[1]; //@phpstan-ignore-line
   
   } elseif (\is_file('/proc/cpuinfo')) {
     if ($res = @file_get_contents('/proc/cpuinfo')) $rt = max(1, \substr_count($res, 'processor'));
@@ -655,7 +654,7 @@ function route_compile(): array {
       if ($seg[0] === '{' && \substr($seg, -1) === '}') {
         $param = \substr($seg, 1, -1);
 
-        if (null === $node['w']) {
+        if (null === $node['w']) { //@phpstan-ignore-line
           $node['w'] = ['p' => $param, 's' => [], 'w' => null, 'r' => null];
         }
 
