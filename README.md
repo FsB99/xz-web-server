@@ -20,7 +20,7 @@ php server.php
 | --- | --- |
 | Go (std http) | ~209.734 |
 | XZ (Unix) | ~326.849 |
-| XZ (Unix with Ev) | ~453.350 |
+| XZ (Unix with Pcntl, Ev and Opcache) | ~453.350 |
 
 # NOTES
 [Developer Notes Link](https://github.com/FsB99/xz-web-server/blob/main/Notes.md)
