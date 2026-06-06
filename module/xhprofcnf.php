@@ -1,5 +1,5 @@
 <?php
 // XZ Web Server by Fsb
-if (! \defined('ABSPATH')) exit(0);
+if (!\defined('ABSPATH')) exit();
 
 $xhprofhtml_dir = '';

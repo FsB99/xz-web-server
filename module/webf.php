@@ -1,6 +1,6 @@
 <?php
 // XZ Web Server by Fsb
-if (! \defined('ABSPATH')) exit(0);
+if (!\defined('ABSPATH')) exit();
 
 function gui_homepage(): array {
   return [

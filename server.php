@@ -1,7 +1,7 @@
 <?php
 // XZ Web Server by Fsb
-declare(strict_types=1);
-if (! \defined('ABSPATH')) define('ABSPATH', __DIR__);
+declare(strict_types = 1);
+if (!\defined('ABSPATH')) \define('ABSPATH', __DIR__);
 set_time_limit(0);
 error_reporting(E_ALL);
 
@@ -33,19 +33,18 @@ include ABSPATH.'/module/http.php';
 
 global $server_cnf;
 static $module_enabled = null, $module_list = null;
-if (\is_null($module_enabled)) {
+if (null === $module_enabled) {
   global $server_cnf;
   $module_enabled = $server_cnf['module_enabled'] ?? [];
   $module_list = $server_cnf['module_list'] ?? [];
 }
 
 foreach ($module_enabled as &$me) {
-  if (\in_array($me, $module_list) && \is_file(ABSPATH.'/module/'.$me.'.php')) {
-    include ABSPATH.'/module/'.$me.'.php';
+  if (\in_array($me, $module_list) && \is_file(ABSPATH."/module/{$me}.php")) {
+    include ABSPATH."/module/{$me}.php";
   }
 }
-echo PHP_EOL;
 
-if (! \defined('LAUNCHER')) {
+if (!\defined('LAUNCHER')) {
   if (\in_array(PHP_SAPI, ['cli', 'micro'])) server_start($server_cnf['host'], $server_cnf['port'], $server_cnf['workers']);
 }

@@ -1,42 +1,46 @@
 #!/usr/bin/env php
 <?php
 // XZ Web Server by Fsb
-define('ABSPATH', __DIR__);
-if (! \in_array(PHP_SAPI, ['cli', 'micro'])) exit('CLI only');
+if (!\defined('ABSPATH')) \define('ABSPATH', __DIR__);
+if (!\in_array(PHP_SAPI, ['cli', 'micro'])) exit('CLI only');
 
-$copt = getopt("a:b:");
+$copt = \getopt("a:b:");
 $copt_a = $copt['a'] ?? 'sast';
 
-if ('waf' === $copt_a) {
-  $b = $copt['b'] ?? 'all';
-  include './module/waf_cnf.php';
-  test_waf_dev($b);
+switch ($copt_a) {
+  case 'waf':
+    $b = $copt['b'] ?? 'all';
+    include './module/waf_cnf.php';
+    test_waf_dev($b);
+    break;
 
-} else if ('perf_flush' === $copt_a) {
-  include './module/xhprof.php';
-  profiler_flush();
+  case 'perf_flush':
+    include './module/xhprof.php';
+    profiler_flush();
+    break;
 
-} elseif ('perf_run' === $copt_a) {
-  include '/module/xhprofcnf.php';
-  global $xhprofhtml_dir;
-  $dir = $xhprofhtml_dir;
-  chdir($dir);
-  if ($pso = popen('php -S localhost:70', 'r')) {
-    pclose($pso);
-  }
-
-} else if ('sast' === $copt_a) {
-  \passthru('php vendor/bin/phpstan analyse -c ps.neon --memory-limit=1G');
+  case 'perf_run':
+    include '/module/xhprofcnf.php';
+    global $xhprofhtml_dir;
+    $dir = $xhprofhtml_dir;
+    chdir($dir);
+    if ($pso = popen('php -S localhost:70', 'r')) pclose($pso);
+    break;
+  
+  default:
+    \passthru('php vendor/bin/phpstan analyse -c ps.neon --memory-limit=1G');
+    break;
 }
 
 // curl fix the request so it may sent correct request and this not suitable with CRS tests, too bad this approch is IO blocking and not multi process.
 function fetch_url(array $dt): int {
   $url = $dt['url'] ?? '';
-  $method = strtolower($dt['method'] ?? 'GET');
+  $method = \strtolower($dt['method'] ?? 'GET');
   $headers_raw = $dt['headers'] ?? [];
   $data = [];
   $status = 400;
   $headers = '';
+  
   foreach ($headers_raw as $k => $v) {
     $headers .= "{$k}: {$v}\r\n";
   }
@@ -49,15 +53,13 @@ function fetch_url(array $dt): int {
     ]
   ];
 
-  if ($method === 'post') {
-    $ctx['http']['content'] = http_build_query($data);
-  }
+  if ($method === 'post') $ctx['http']['content'] = \http_build_query($data);
 
   $context = stream_context_create($ctx);
   @file_get_contents($url, false, $context);
   
   if (isset($http_response_header[0])) {
-    preg_match('~HTTP/\d+\.\d+\s+(\d+)~', $http_response_header[0], $m);
+    \preg_match('~HTTP/\d+\.\d+\s+(\d+)~', $http_response_header[0], $m);
     $status = (int)$m[1];
   }
 
@@ -71,18 +73,17 @@ function test_waf_dev(string|int $scan_id): void {
   $dt = test_waf_load_tests($scan_id);
 
   // build array
-  foreach ($dt as $dtx) {
+  foreach ($dt as &$dtx) {
     $id = $dtx['rule_id'] ?? 0;
     $tests = $dtx['tests'] ?? [];
-
     if (\in_array($id, $crs_ignored_ids)) continue;
 
-    foreach ($tests as $test) {
+    foreach ($tests as &$test) {
       $test_id = $test['test_id'] ?? 0;
       $desc = \substr(($test['desc'] ?? ''), 0, 40);
       $stages = $test['stages'] ?? [];
 
-      foreach ($stages as $stage) {
+      foreach ($stages as &$stage) {
         $input = $stage['input'] ?? [];
 
         $dt = [
@@ -95,7 +96,6 @@ function test_waf_dev(string|int $scan_id): void {
         ];
 
         $exclude_this = (\in_array($id, $crs_test_must_http_code_200));
-
         $code = fetch_url($dt);
 
         if (\in_array($code, [200])) {
@@ -118,7 +118,7 @@ function test_waf_dev(string|int $scan_id): void {
     }
   }
 
-  if (! empty($tmp)) {
+  if (!empty($tmp)) {
     echo 'FAILED: '.\count($tmp).'/'.\count($reqs).PHP_EOL;
     @file_put_contents('./tmp/failed_tests.json', json_encode($tmp));
   }
@@ -132,7 +132,7 @@ function test_waf_load_tests(string|int $scan_id): array|bool {
       if (\in_array($file, ['.', '..'])) continue;
 
       if ('all' !== $scan_id) {
-        if (! str_starts_with($file, $scan_id)) continue;
+        if (!\str_starts_with($file, $scan_id)) continue;
       }
 
       $fpath = $dir.$file;

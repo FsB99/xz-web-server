@@ -1,22 +1,19 @@
 <?php
 // XZ Web Server by Fsb
-if (! \defined('ABSPATH')) exit(0);
+if (!\defined('ABSPATH')) exit();
 
 include ABSPATH.'/module/waf_cnf.php';
 $waf_file = ABSPATH.'/module/waf_rules.php';
 
-if (\is_file($waf_file)) {
-  include $waf_file;
-} else {
-  echo 'Error: Failed to load waf rules'.PHP_EOL;
-}
+if (!\is_file($waf_file)) throw new InvalidArgumentException('Missing WAF rules files');
+include $waf_file;
 
 function waf_compile(array $rules): array{
   global $crs_ignored_ids, $crs_pl;
   $rt = [];
   $rules_added = 0;
 
-  foreach ($rules as $r) {
+  foreach ($rules as &$r) {
     if (\in_array($r['id'], $crs_ignored_ids ?? []) || ($r['pl'] > $crs_pl)) continue;
     ++$rules_added;
     
@@ -27,9 +24,9 @@ function waf_compile(array $rules): array{
       'conds' => []
     ];
 
-    foreach ($r['rule'] as $c) {
+    foreach ($r['rule'] as &$c) {
       $vars = \array_map('strtolower', (array)($c['w'] ?? []));
-      if (! $vars) continue;
+      if (!$vars) continue;
 
       $cond = [
         'var' => $vars,
@@ -39,7 +36,7 @@ function waf_compile(array $rules): array{
         'not' => ! empty($c['not'])
       ];
 
-      foreach (['eq','not_eq','gt','empty','utf','byte_range','range','maxl','contains','rx','in'] as $op) {
+      foreach (['eq','not_eq','gt','empty','utf','byte_range','range','maxl','contains','rx','in'] as &$op) {
         if (isset($c[$op])) {
           $cond['op'] = $op;
           $cond['val'] = $c[$op];
@@ -49,16 +46,17 @@ function waf_compile(array $rules): array{
 
       if ($cond['op'] === 'in') {
         $set = [];
+
         foreach ((array)$cond['val'] as $v) {
           $set[strtolower($v)] = 1;
         }
+
         $cond['val'] = $set;
       }
 
       if ($cond['op'] === 'rx') {
         if (! valid_regex($cond['val'])) {
-        // if (@preg_match($cond['val'], 'a') === false) {
-          echo "Invalid regex in rule {$r['id']}".PHP_EOL;
+          echo "Invalid regex in rule {$r['id']}\n";
           continue;
         }
       }
@@ -66,7 +64,7 @@ function waf_compile(array $rules): array{
       $cr['conds'][] = $cond;
     }
 
-    if (! $cr['conds']) continue;
+    if (!$cr['conds']) continue;
 
     $cr['conds'] = waf_sort_conds($cr['conds']);
     $first = $cr['conds'][0]['var'][0] ?? null;
@@ -91,7 +89,7 @@ function waf_compile(array $rules): array{
     if ($req_key) $rt[$req_key][] = $cr;
   }
 
-  echo 'CRS loaded: '.$rules_added.PHP_EOL;
+  echo "CRS loaded: {$rules_added}\n";
   // file_put_contents('tmp/compile.json', json_encode($rt));
   return $rt;
 }
@@ -109,7 +107,7 @@ function waf_sort_conds(array $conds): array{
     'rx' => 10
   ];
 
-  usort($conds, function($a,$b) use ($prio) {
+  usort($conds, function($a, $b) use ($prio) {
     $pa = $prio[$a['op']] ?? 50;
     $pb = $prio[$b['op']] ?? 50;
     return $pa <=> $pb;
@@ -124,7 +122,7 @@ function waf_get_var(array $cond, array $req): array|null|string {
 
   switch ($var) {
     case 'method':
-    return $req['r_mtd'] ?? 'get';
+      return $req['r_mtd'] ?? 'get';
    
     case 'uri':
       return $req['r_uri'] ?? '';
@@ -139,36 +137,28 @@ function waf_get_var(array $cond, array $req): array|null|string {
       return $req['r_body'] ?? '';
 
     case 'header':
-      if ($key) {
-        return isset($req['r_head'][$key]) ? [$req['r_head'][$key]] : [];
-      }
+      if ($key) return isset($req['r_head'][$key]) ? [$req['r_head'][$key]] : [];
       return $req['r_head'] ?? [];
 
     case 'header_names':
       return $req['r_head_names'] ?? [];
 
     case 'cookie':
-      if ($key) {
-        return isset($req['r_cookie'][$key]) ? [$req['r_cookie'][$key]] : [];
-      }
+      if ($key) return isset($req['r_cookie'][$key]) ? [$req['r_cookie'][$key]] : [];
       return $req['r_cookie_vals'] ?? [];
 
     case 'cookie_names':
       return $req['r_cookie_names'] ?? [];
 
     case 'args':
-      if ($key) {
-        return isset($req['r_args'][$key]) ? [$req['r_args'][$key]] : [];
-      }
+      if ($key) return isset($req['r_args'][$key]) ? [$req['r_args'][$key]] : [];
       return $req['r_args_vals'] ?? [];
 
     case 'args_names':
       return $req['r_args_names'] ?? [];
 
     case 'files':
-      if ($key) {
-        return isset($req['r_files'][$key]) ? [$req['r_files'][$key]] : [];
-      }
+      if ($key) return isset($req['r_files'][$key]) ? [$req['r_files'][$key]] : [];
       return $req['r_files_vals'] ?? [];
 
     case 'files_names':
@@ -178,14 +168,14 @@ function waf_get_var(array $cond, array $req): array|null|string {
   return null;
 }
 
-function waf_match_cond(array $cond, array $req): bool{
+function waf_match_cond(array $cond, array $req): bool {
   $vals = waf_get_var($cond, $req);
   if (empty($vals) || \is_string($vals)) return false;
   $op  = $cond['op'];
   $val = $cond['val'];
 
-  foreach ($vals as $v) { //@phpstan-ignore-line
-    if ($v === '' || $v === null) continue;
+  foreach ($vals as &$v) { //@phpstan-ignore-line
+    if ('' === $v || null === $v) continue;
     $r = false;
 
     switch ($op) {
@@ -214,7 +204,7 @@ function waf_match_cond(array $cond, array $req): bool{
         break;
 
       case 'byte_range':
-        if (strpos($v, "\0") !== false) return false;
+        if (false !== \strpos($v, "\0")) return false;
         break;
 
       case 'empty':
@@ -227,8 +217,6 @@ function waf_match_cond(array $cond, array $req): bool{
     }
 
     if (! empty($cond['not'])) $r = !$r;
-
-
     if ($r) return true;
   }
   return false;
@@ -236,7 +224,7 @@ function waf_match_cond(array $cond, array $req): bool{
 
 function waf_run(array $req, int $threshold = 5): bool{
   static $CRS = null, $xhprof_on = null, $xhprof_ui = null;
-  if (\is_null($xhprof_on)) {
+  if (null === $xhprof_on) {
     global $server_cnf;
     $check = $server_cnf['module_enabled'] ?? [];
     $check2 = $server_cnf['xhprof_scan'] ?? [];
@@ -245,28 +233,28 @@ function waf_run(array $req, int $threshold = 5): bool{
   }
   $score = 0;
   $hits = [];
-  if ($xhprof_on) profiler_start();
+  if ($xhprof_on && \function_exists('profiler_start')) profiler_start();
 
-  if (\is_null($CRS)) {
+  if (null === $CRS) {
     global $crs_rules;
     $CRS = waf_compile($crs_rules);;
   }
 
   foreach ($CRS as $slot => $rules) {
-    if (! isset($req[$slot]) || ! $req[$slot]) continue;
+    if (!isset($req[$slot]) || ! $req[$slot]) continue;
 
-    foreach ($rules as $rule) {
+    foreach ($rules as &$rule) {
       $conds = $rule['conds'];
       $ok = true;
 
       for ($i = 0, $n = \count($conds); $i < $n; $i++) {
-        if (! waf_match_cond($conds[$i], $req)) {
+        if (!waf_match_cond($conds[$i], $req)) {
           $ok = false;
           break;
         }
       }
 
-      if (! $ok) continue;
+      if (!$ok) continue;
 
       $score += $rule['score'];
       $hits[] = [
@@ -279,25 +267,13 @@ function waf_run(array $req, int $threshold = 5): bool{
     }
   }
 
-  if ($xhprof_on) {
+  if ($xhprof_on && \function_exists('profiler_stop')) {
     if ($run = profiler_stop('waf')) {
-      if (! \is_null($xhprof_ui)) {
-        echo $xhprof_ui.'/index.php?run='.$run.'&source=waf'.PHP_EOL;
-      } else {
-        echo 'run='.$run.PHP_EOL;
-      }
+      echo (null !== $xhprof_ui) ? "{$xhprof_ui}/index.php?run={$run}&source=waf\n" : "run={$run}\n";
     }
   }
 
-  if ($score >= $threshold) {
-    /* debug output */
-    // print_r([
-    //   'waf'   => $hits,
-    //   'score' => $score
-    // ]);
-    return true;
-  }
-
+  if ($score >= $threshold) return true;
   return false;
 }
 
@@ -307,7 +283,7 @@ function waf_readfile(string $file): array {
   if (\is_file($file)) {
     $lines = @file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
-    foreach ($lines as $line) {
+    foreach ($lines as &$line) {
       $line = \trim($line);
       if ('' === $line  || '#' === $line[0]) continue;
       $rt[] = $line;
@@ -316,7 +292,7 @@ function waf_readfile(string $file): array {
   return $rt;
 }
 
-function waf_prepare_req(array &$req): void{
+function waf_prepare_req(array &$req): void {
   if (!empty($req['r_head'])) {
     $req['r_head_vals'] = array_values($req['r_head']);
     $req['r_head_names'] = array_keys($req['r_head']);
@@ -355,16 +331,15 @@ function waf_prepare_req(array &$req): void{
 
 function valid_regex(string $pattern): bool {
   static $eh = null;
-  if (\is_null($eh)) $eh = function(){};
+  if (null === $eh) $eh = function(){};
 
   set_error_handler($eh, E_WARNING);
-  $ok = preg_match($pattern, '') !== false;
+  $ok = \preg_match($pattern, '') !== false;
   restore_error_handler();
   return $ok;
 }
 
 function valid_utf8(string $s): bool{
   $utf = ('' === $s || (preg_match('/^./us', $s) === 1));
-  // echo 'utf: '.($utf ? 1 : 0).PHP_EOL;
   return $utf;
 }
